@@ -7,7 +7,7 @@ vm_x2017:
 	echo "vm_x2017"
 
 objdump_x2017: 
-	objdump_x2017.c $(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) objdump_x2017.c -o $@
 
 tests:
 	echo "tests"

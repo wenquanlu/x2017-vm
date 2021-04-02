@@ -4,17 +4,17 @@
 char get_bits(int bit_shift, int displacement, int length, FILE *fp, unsigned char * byte_buf) {
     if (bit_shift > 8 - length) {
         fseek(fp, -displacement, SEEK_END);
-        fread(byte_buf, sizeof(byte_buf), 1, fp);
+        fread(byte_buf, sizeof(*byte_buf), 1, fp);
         unsigned char second = *byte_buf;
         fseek(fp, -(displacement)-1, SEEK_END);
-        fread(byte_buf, sizeof(byte_buf), 1, fp);
+        fread(byte_buf, sizeof(*byte_buf), 1, fp);
         unsigned char first = *byte_buf;
         unsigned short concat = ((short) first << 8) | ((0x00ff & second));
         unsigned char result = (concat >> bit_shift) & ((1 << length) - 1);    
         return result;
     } else {
         fseek(fp, -displacement, SEEK_END);
-        fread(byte_buf, sizeof(byte_buf), 1, fp);
+        fread(byte_buf, sizeof(*byte_buf), 1, fp);
         char result = (*byte_buf >> bit_shift) & ((1 << length) - 1);
         return result;
     }
