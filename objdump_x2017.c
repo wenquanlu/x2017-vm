@@ -70,8 +70,13 @@ void print_first(unsigned int line, int * internal_counter, int symbol_pt, char 
         }
         *internal_counter += 7;
     } else if (data_type == 0b11) {
-        printf("PT ");
-        printf("%d", (line >> (5) & 0b11111));
+        printf("PTR ");
+        char data = (line >> (5)) & 0b11111;
+        for (int i = 0; i < symbol_pt; i++) {
+                if (data == symbol_ls[i]) {
+                    printf("%c", get_symbol(i));
+                }
+        }
         *internal_counter += 7;
     }
 }
@@ -98,7 +103,12 @@ void print_second(unsigned int line, int * internal_counter, int symbol_pt, char
         *internal_counter += 7;
     } else if (data_type == 0b11) {
         printf(" PTR ");
-        printf("%d\n", (line >> (*internal_counter + 2) & 0b11111));
+        char data = line >> (*internal_counter + 2) & 0b11111;
+        for (int i = 0; i < symbol_pt; i++) {
+                if (data == symbol_ls[i]) {
+                    printf("%c\n", get_symbol(i));
+                }
+        }
         *internal_counter += 7;
     }
 }
@@ -263,7 +273,11 @@ int main(int argc, char **argv) {
               
             } else if (curr_type == pt) {
                 char data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
-                printf("%d", data); //
+                for (int i = 0; i < symbol_pt; i++) {
+                    if (data == symbol_ls[i]) {
+                        printf("%c\n", get_symbol(i));
+                    }
+                }
                 bit_count += 5;
                 ////////////////
                 line_length += 5;
@@ -337,7 +351,11 @@ int main(int argc, char **argv) {
                 ////////////////
             } else if (curr_type == pt) {
                 char data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
-                printf("%d\n", data); //
+                for (int i = 0; i < symbol_pt; i++) {
+                    if (data == symbol_ls[i]) {
+                        printf("%c\n", get_symbol(i));
+                    }
+                }
                 bit_count += 5;
                 ////////////////
                 line_length += 5;
