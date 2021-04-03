@@ -142,7 +142,6 @@ void print_op(unsigned char data_type, unsigned char data, char * symbol_ls, int
 
 
 int main(int argc, char **argv) {
-    printf("hello world!");
     struct operation {
         unsigned char opcode;
         unsigned char type1;
@@ -202,7 +201,7 @@ int main(int argc, char **argv) {
                     break;
                 }
                 this_func = (struct func *) malloc(sizeof(struct func));
-                this_op = (struct operation *) malloc(sizeof(struct operation));
+                //this_op = (struct operation *) malloc(sizeof(struct operation));
                 func_length = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
                 this_op_ls = (struct operation *) malloc(sizeof(struct operation) * func_length);
                 this_func -> len = func_length;
@@ -228,6 +227,7 @@ int main(int argc, char **argv) {
                 ////////////////////
 
             } else  {
+                this_op = (struct operation *) malloc(sizeof(struct operation));
                 unsigned char opcode = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
                 if (opcode == 0b000) {
                     //printf("    MOV "); //
@@ -259,6 +259,7 @@ int main(int argc, char **argv) {
                 if (opcode == 0b010) {
                     this_op -> opcode = 0b010;
                     this_op_ls[func_length - func_pt - 1] = *this_op;
+                    free(this_op);
                     stage = 1;
                     ///////////////
                     //line_ls[line_counter] = 5;
@@ -353,6 +354,7 @@ int main(int argc, char **argv) {
                 //printf("\n"); //
                 /////////////////
                 this_op_ls[func_length - func_pt] = *this_op;
+                free(this_op);
                 //line_ls[line_counter] = line_length;
                 //line_counter ++;
                 //line_length = 0;
@@ -435,6 +437,7 @@ int main(int argc, char **argv) {
             //line_length = 0;
             this_op -> opr2 = data;
             this_op_ls[func_length - func_pt] = *this_op;
+            free(this_op);
             /////////////////
             //don't forget to set instruction length in function here 
         }
@@ -615,5 +618,16 @@ int main(int argc, char **argv) {
             }
         }
         fpt = fpt -> next;
+    }
+
+    struct func * fpt2 = func_ls;
+    while (fpt2) {
+        struct func * next_pt = fpt2 -> next;
+        //for (int i = 0; i < fpt2 -> len; i++) {
+            //free(&(fpt2 -> op_ls[i]));
+        //}
+        free(fpt2 -> op_ls);
+        free(fpt2);
+        fpt2 = next_pt;
     }
 }
