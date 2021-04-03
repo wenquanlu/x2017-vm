@@ -27,7 +27,7 @@ char get_symbol(int index) {
         return 'a' + index;
     }
 }
-
+/*
 void print_op (unsigned int line, int * internal_counter) {
     unsigned int opcode = line & 0b111;
     if (opcode == 0b000) {
@@ -49,7 +49,8 @@ void print_op (unsigned int line, int * internal_counter) {
     }
     *internal_counter += 3;
 }
-
+*/
+/*
 void print_first(unsigned int line, int * internal_counter, int symbol_pt, char * symbol_ls) {
     unsigned int data_type = (line >> 3) & 0b11;
     if (data_type == 0b00) {
@@ -80,6 +81,8 @@ void print_first(unsigned int line, int * internal_counter, int symbol_pt, char 
         *internal_counter += 7;
     }
 }
+
+
 
 void print_second(unsigned int line, int * internal_counter, int symbol_pt, char * symbol_ls) {
     unsigned int data_type = (line >> (*internal_counter)) & 0b11;
@@ -112,8 +115,49 @@ void print_second(unsigned int line, int * internal_counter, int symbol_pt, char
         *internal_counter += 7;
     }
 }
+*/
+void print_op(unsigned char data_type, unsigned char data, char * symbol_ls, int symbol_pt) {
+    if (data_type == 0b00) {
+        printf(" VAL %d", data); //
+    } else if (data_type == 0b01) {
+        printf(" REG %d", data); //
+    } else if (data_type == 0b10) {
+        printf(" STK "); //
+        for (int i = 0; i < symbol_pt; i++) {
+            if (symbol_ls[i] == data) {
+                printf("%c", get_symbol(i));
+                break;
+            }
+        }
+    } else if (data_type == 0b11) {
+        printf(" PTR "); //
+        for (int i = 0; i < symbol_pt; i++) {
+            if (symbol_ls[i] == data) {
+                printf("%c", get_symbol(i));
+                break;
+            }
+        }
+    }
+}
+
 
 int main(int argc, char **argv) {
+    printf("hello world!");
+    struct operation {
+        unsigned char opcode;
+        unsigned char type1;
+        unsigned char opr1;
+        unsigned char type2;
+        unsigned char opr2;
+    };
+
+    struct func {
+        unsigned char label;
+        struct operation * op_ls;
+        struct func *next;
+        unsigned char len;
+    };
+
     //char mem[256];
     //char * data_mem = (char *) malloc(45*sizeof(char));
     //int capacity = 45;
@@ -139,9 +183,13 @@ int main(int argc, char **argv) {
     enum opera_type curr_type;
     enum opco_type curr_opco_type;
     int symbol_pt = 0;
-    char line_ls[30];
-    int line_counter = 0;
-    char line_length = 0;
+    //int line_counter = 0;
+    //char line_length = 0;
+    struct func * func_ls = NULL;
+    struct func * this_func;
+    struct operation * this_op;
+    struct operation * this_op_ls;
+    //char line_ls[30];
     while (1) {
         int displacement = bit_count / 8 + 1;
         int inbyte_dis;
@@ -149,30 +197,38 @@ int main(int argc, char **argv) {
         if (stage == 1) {
             if (!in_func) {
                 if (size*8 - bit_count < 8) {
-                    line_ls[line_counter] = size*8 - bit_count;
-                    line_counter++;
+                    //line_ls[line_counter] = size*8 - bit_count;
+                    //line_counter++;
                     break;
                 }
+                this_func = (struct func *) malloc(sizeof(struct func));
+                this_op = (struct operation *) malloc(sizeof(struct operation));
                 func_length = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
+                this_op_ls = (struct operation *) malloc(sizeof(struct operation) * func_length);
+                this_func -> len = func_length;
                 in_func = 1;
                 bit_count += 5;
                 stage = 1;
             }else if (func_length == func_pt) {
-                //char func = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); //
+                unsigned char func = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); //
                 //printf("FUNC LABEL %d\n", func); //
+                this_func -> op_ls = this_op_ls;
+                this_func -> label = func;
+                this_func -> next = func_ls;
+                func_ls = this_func;
                 bit_count += 3;
                 in_func = 0;
                 func_length = 0;
                 func_pt = 0;
                 stage = 1;  
                 /////////////////////
-                line_ls[line_counter] = 3;
-                line_counter ++;
-                line_length = 0;
+                //line_ls[line_counter] = 3;
+                //line_counter ++;
+                //line_length = 0;
                 ////////////////////
 
             } else  {
-                char opcode = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
+                unsigned char opcode = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
                 if (opcode == 0b000) {
                     //printf("    MOV "); //
                     curr_opco_type = mov;
@@ -201,24 +257,28 @@ int main(int argc, char **argv) {
                 bit_count += 3;
                 stage = 2;
                 if (opcode == 0b010) {
+                    this_op -> opcode = 0b010;
+                    this_op_ls[func_length - func_pt - 1] = *this_op;
                     stage = 1;
                     ///////////////
-                    line_ls[line_counter] = 5;
-                    line_counter ++;
+                    //line_ls[line_counter] = 5;
+                    //line_counter ++;
                     ///////////////
                     ///////////////
-                    line_ls[line_counter] = 3;
-                    line_counter ++;
-                    line_length = 0;
+                    //line_ls[line_counter] = 3;
+                    //line_counter ++;
+                    //line_length = 0;
                     ///////////////
+                } else {
+                    this_op -> opcode = opcode;
                 }
                 func_pt ++;
                 //////////////
-                line_length = 3;
+                //line_length = 3;
                 //////////////
             }
         } else if (stage == 2) {
-            char data_type = get_bits(inbyte_dis, displacement, 2, fp, &byte_buf);
+            unsigned char data_type = get_bits(inbyte_dis, displacement, 2, fp, &byte_buf);
             if (data_type == 0b00) {
                 curr_type = val;
                 //printf("VAL ");
@@ -232,28 +292,30 @@ int main(int argc, char **argv) {
                 curr_type = pt;
                 //printf("PTR ");
             }
+            this_op -> type1 = data_type;
             ////////////////
-            line_length += 2;
+            //line_length += 2;
             ////////////////
             bit_count += 2;
             stage = 3;
         } else if (stage == 3) {
+            unsigned char data;
             if (curr_type == val) {
-                //char data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf); //
+                data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf); //
                 //printf("%d", data); //
                 bit_count += 8;
                 ////////////////
-                line_length += 8;
+                //line_length += 8;
                 ////////////////
             } else if (curr_type == reg) {
-                //char data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); //
+                data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); //
                 //printf("%d", data); //
                 bit_count += 3;
                 ////////////////
-                line_length += 3;
+                //line_length += 3;
                 ////////////////
             } else if (curr_type == stac) {
-                char data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
+                data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
                 int exist = 0;
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
@@ -268,36 +330,38 @@ int main(int argc, char **argv) {
                 }
                 bit_count += 5;
                 ////////////////
-                line_length += 5;
+                //line_length += 5;
                 ////////////////
               
             } else if (curr_type == pt) {
-                /*char data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
-                for (int i = 0; i < symbol_pt; i++) {
+                data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
+                /*for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
                         printf("%c\n", get_symbol(i));
                     }
                 }*/
                 bit_count += 5;
                 ////////////////
-                line_length += 5;
+                //line_length += 5;
                 ////////////////
             } 
             stage = 4;
+            this_op -> opr1 = data;
             if (curr_opco_type == cal || curr_opco_type == print || 
             curr_opco_type == not || curr_opco_type == equ) {
                 stage = 1;
                 //printf("\n"); //
                 /////////////////
-                line_ls[line_counter] = line_length;
-                line_counter ++;
-                line_length = 0;
+                this_op_ls[func_length - func_pt] = *this_op;
+                //line_ls[line_counter] = line_length;
+                //line_counter ++;
+                //line_length = 0;
                 /////////////////
             }
         
             //don't forget to set instruction length in function here for unary operation
         } else if (stage == 4) {
-            char data_type = get_bits(inbyte_dis, displacement, 2, fp, &byte_buf);
+            unsigned char data_type = get_bits(inbyte_dis, displacement, 2, fp, &byte_buf);
             if (data_type == 0b00) {
                 curr_type = val;
                 //printf(" VAL "); //
@@ -311,28 +375,30 @@ int main(int argc, char **argv) {
                 curr_type = pt;
                 //printf(" PTR "); //
             }
+            this_op -> type2 = data_type;
             bit_count += 2;
             stage = 5;
             ////////////////
-            line_length += 2;
+            //line_length += 2;
             ////////////////
         } else if (stage == 5) {
+            unsigned char data;
             if (curr_type == val) {
-                //char data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf); //
+                data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf); //
                 //printf("%d\n", data); //
                 bit_count += 8;
                 ////////////////
-                line_length += 8;
+                //line_length += 8;
                 ////////////////
             } else if (curr_type == reg) {
-                //char data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); //
+                data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); //
                 //printf("%d\n", data); //
                 bit_count += 3;
                 ////////////////
-                line_length += 3;
+                //line_length += 3;
                 ////////////////
             } else if (curr_type == stac) {
-                char data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
+                data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
                 int exist = 0;
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
@@ -347,10 +413,11 @@ int main(int argc, char **argv) {
                 }
                 bit_count += 5;
                 ////////////////
-                line_length += 5;
+                //line_length += 5;
                 ////////////////
             } else if (curr_type == pt) {
-                /*char data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
+                data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
+                /*
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
                         printf("%c\n", get_symbol(i));
@@ -358,18 +425,21 @@ int main(int argc, char **argv) {
                 }*/
                 bit_count += 5;
                 ////////////////
-                line_length += 5;
+                //line_length += 5;
                 ////////////////
             }
             stage = 1;
             /////////////////
-            line_ls[line_counter] = line_length;
-            line_counter ++;
-            line_length = 0;
+            //line_ls[line_counter] = line_length;
+            //line_counter ++;
+            //line_length = 0;
+            this_op -> opr2 = data;
+            this_op_ls[func_length - func_pt] = *this_op;
             /////////////////
             //don't forget to set instruction length in function here 
         }
     }
+/*
     //printf("########################\n");
     fseek(fp, 0, SEEK_SET);
     unsigned char chunk;
@@ -501,5 +571,49 @@ int main(int argc, char **argv) {
         }
 
     }
+*/
+    struct func * fpt = func_ls;
+    //printf("%d", fpt -> op_ls[0].opcode);
 
+    while (fpt) {
+        printf("FUNC LABEL %d\n", fpt -> label);
+        for (int i = 0; i < fpt -> len; i++) {
+            struct operation op = fpt -> op_ls[i];
+            if (op.opcode == 0b010) {
+                printf("    RET\n");
+            } else if (op.opcode == 0b001) {
+                printf("    CAL ");
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
+                printf("\n");
+            } else if (op.opcode == 0b101) {
+                printf("    PRINT");
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
+                printf("\n");
+            } else if (op.opcode == 0b110) {
+                printf("    NOT");
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
+                printf("\n");
+            } else if (op.opcode == 0b111) {
+                printf("    EQU");
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
+                printf("\n");
+            } else if (op.opcode == 0b000) {
+                printf("    MOV");
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
+                print_op(op.type2, op.opr2, symbol_ls, symbol_pt);
+                printf("\n");
+            } else if (op.opcode == 0b011) {
+                printf("    REF");
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
+                print_op(op.type2, op.opr2, symbol_ls, symbol_pt);
+                printf("\n");
+            } else if (op.opcode == 0b100) {
+                printf("    ADD");
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
+                print_op(op.type2, op.opr2, symbol_ls, symbol_pt);
+                printf("\n");
+            }
+        }
+        fpt = fpt -> next;
+    }
 }
