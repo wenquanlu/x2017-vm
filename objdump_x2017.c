@@ -330,8 +330,8 @@ int main(int argc, char **argv) {
                 line_length += 5;
                 ////////////////
             } else if (curr_type == pt) {
-                char data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
-                printf("%d\n", data); //
+                //char data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
+                //printf("%d\n", data); //
                 bit_count += 5;
                 ////////////////
                 line_length += 5;
