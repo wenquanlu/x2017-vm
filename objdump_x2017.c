@@ -145,8 +145,8 @@ int main(int argc, char **argv) {
                 bit_count += 5;
                 stage = 1;
             }else if (func_length == func_pt) {
-                //char func = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
-                //printf("FUNC LABEL %d\n", func);
+                //char func = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); //
+                //printf("FUNC LABEL %d\n", func); //
                 bit_count += 3;
                 in_func = 0;
                 func_length = 0;
@@ -161,25 +161,25 @@ int main(int argc, char **argv) {
             } else  {
                 char opcode = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
                 if (opcode == 0b000) {
-                    //printf("    MOV ");
+                    //printf("    MOV "); //
                     curr_opco_type = mov;
                 } else if (opcode == 0b001) {
-                    //printf("    CAL ");
+                    //printf("    CAL "); //
                     curr_opco_type = cal;
                 } else if (opcode == 0b010) {
-                    //printf("    RET\n");
+                    //printf("    RET\n"); //
                     curr_opco_type = ret;
                 } else if (opcode == 0b100) {
-                    //printf("    ADD ");
+                    //printf("    ADD "); //
                     curr_opco_type = add;
                 } else if (opcode == 0b101) {
-                    //printf("    PRINT ");
+                    //printf("    PRINT "); //
                     curr_opco_type = print;
                 } else if (opcode == 0b110) {
-                    //printf("    NOT ");
+                    //printf("    NOT "); //
                     curr_opco_type = not;
                 } else if (opcode == 0b111) {
-                    //printf("    EQU ");
+                    //printf("    EQU "); //
                     curr_opco_type = equ;
                 }
                 bit_count += 3;
@@ -223,15 +223,15 @@ int main(int argc, char **argv) {
             stage = 3;
         } else if (stage == 3) {
             if (curr_type == val) {
-                //char data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf);
-                //printf("%d", data);
+                //char data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf); //
+                //printf("%d", data); //
                 bit_count += 8;
                 ////////////////
                 line_length += 8;
                 ////////////////
             } else if (curr_type == reg) {
-                //char data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
-                //printf("%d", data);
+                //char data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); //
+                //printf("%d", data); //
                 bit_count += 3;
                 ////////////////
                 line_length += 3;
@@ -241,13 +241,13 @@ int main(int argc, char **argv) {
                 int exist = 0;
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
-                        //printf("%c", get_symbol(i));
+                        //printf("%c", get_symbol(i)); //
                         exist = 1;
                     }
                 }
                 if (!exist) {
                     symbol_ls[symbol_pt] = data;
-                    //printf("%c", get_symbol(symbol_pt));
+                    //printf("%c", get_symbol(symbol_pt)); //
                     symbol_pt ++;
                 }
                 bit_count += 5;
@@ -256,8 +256,8 @@ int main(int argc, char **argv) {
                 ////////////////
               
             } else if (curr_type == pt) {
-                //char data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
-                //printf("%d", data);
+                //char data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
+                //printf("%d", data); //
                 bit_count += 5;
                 ////////////////
                 line_length += 5;
@@ -267,7 +267,7 @@ int main(int argc, char **argv) {
             if (curr_opco_type == cal || curr_opco_type == print || 
             curr_opco_type == not || curr_opco_type == equ) {
                 stage = 1;
-                //printf("\n");
+                //printf("\n"); //
                 /////////////////
                 line_ls[line_counter] = line_length;
                 line_counter ++;
@@ -280,16 +280,16 @@ int main(int argc, char **argv) {
             char data_type = get_bits(inbyte_dis, displacement, 2, fp, &byte_buf);
             if (data_type == 0b00) {
                 curr_type = val;
-                //printf(" VAL ");
+                //printf(" VAL "); //
             } else if (data_type == 0b01) {
                 curr_type = reg;
-                //printf(" REG ");
+                //printf(" REG "); //
             } else if (data_type == 0b10) {
                 curr_type = stac;
-                //printf(" STK ");
+                //printf(" STK "); //
             } else if (data_type == 0b11) {
                 curr_type = pt;
-                //printf(" PT ");
+                //printf(" PT "); //
             }
             bit_count += 2;
             stage = 5;
@@ -298,15 +298,15 @@ int main(int argc, char **argv) {
             ////////////////
         } else if (stage == 5) {
             if (curr_type == val) {
-                //char data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf);
-                //printf("%d\n", data);
+                //char data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf); //
+                //printf("%d\n", data); //
                 bit_count += 8;
                 ////////////////
                 line_length += 8;
                 ////////////////
             } else if (curr_type == reg) {
-                //char data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
-                //printf("%d\n", data);
+                //char data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); //
+                //printf("%d\n", data); //
                 bit_count += 3;
                 ////////////////
                 line_length += 3;
@@ -316,13 +316,13 @@ int main(int argc, char **argv) {
                 int exist = 0;
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
-                        //printf("%c\n", get_symbol(i));
+                        //printf("%c\n", get_symbol(i)); //
                         exist = 1;
                     }
                 }
                 if (!exist) {
                     symbol_ls[symbol_pt] = data;
-                    //printf("%c\n", get_symbol(symbol_pt));
+                    //printf("%c\n", get_symbol(symbol_pt)); //
                     symbol_pt ++;
                 }
                 bit_count += 5;
@@ -330,8 +330,8 @@ int main(int argc, char **argv) {
                 line_length += 5;
                 ////////////////
             } else if (curr_type == pt) {
-                //char data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
-                //printf("%d\n", data);
+                char data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
+                printf("%d\n", data); //
                 bit_count += 5;
                 ////////////////
                 line_length += 5;
@@ -346,6 +346,7 @@ int main(int argc, char **argv) {
             //don't forget to set instruction length in function here 
         }
     }
+    //printf("########################\n");
     fseek(fp, 0, SEEK_SET);
     unsigned char chunk;
     int po_dis = line_ls[line_counter - 1];
@@ -364,7 +365,19 @@ int main(int argc, char **argv) {
                 printf("FUNC LABEL %d\n", (chunk >> bit_diff) & 0b111);
             }
         } else if (line_len != 5) {
-            if (bit_diff + line_len > 8 && bit_diff + line_len <= 16) {
+            if (bit_diff + line_len <= 8) {
+                int internal_counter = 0;
+                fseek(fp, byte_diff, SEEK_SET);
+                fread(&chunk, sizeof(chunk), 1, fp);
+                unsigned char line = (chunk >> (8 - bit_diff - line_len)) & ((1 << line_len) - 1);
+                print_op(line, &internal_counter);
+                print_first(line, &internal_counter,symbol_pt, symbol_ls);
+                if (internal_counter < line_len) {
+                    print_second(line, &internal_counter,symbol_pt, symbol_ls);
+                } else {
+                    printf("\n");
+                }
+            } else if (bit_diff + line_len > 8 && bit_diff + line_len <= 16) {
                 fseek(fp, byte_diff, SEEK_SET);
                 fread(&chunk, sizeof(chunk), 1, fp);
                 unsigned char first = chunk;
