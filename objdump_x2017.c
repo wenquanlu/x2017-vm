@@ -78,7 +78,8 @@ void print_second(unsigned int line, int * internal_counter, int symbol_pt, char
     unsigned int data_type = (line >> (*internal_counter)) & 0b11;
     if (data_type == 0b00) {
         printf(" VAL ");
-        printf("%d\n", (line >> (*internal_counter + 2) & 0b11111111));
+        //printf("%d", *internal_counter);
+        printf("%d\n", ((line >> (*internal_counter + 2)) & 0b11111111));
         *internal_counter += 10;
     } else if (data_type == 0b01) {
         printf(" REG ");
@@ -362,7 +363,21 @@ int main(int argc, char **argv) {
                 printf("    RET\n");
             } else {
                 //printf("%x\n", (chunk >> bit_diff) & 0b111);
-                printf("FUNC LABEL %d\n", (chunk >> bit_diff) & 0b111);
+                if (bit_diff + 3 <= 8) {
+                    //printf("chunk: %x, bit_diff: %x\n", chunk, bit_diff);
+                    //printf("last_bug: %x", (chunk >> 2));
+                    printf("FUNC LABEL %d\n", (chunk >> (8-bit_diff - 3)) & 0b111);
+                } else {
+                    fseek(fp, byte_diff, SEEK_SET);
+                    fread(&chunk, sizeof(chunk), 1, fp);
+                    unsigned char first = chunk;
+                    fseek(fp, byte_diff + 1, SEEK_SET);
+                    fread(&chunk, sizeof(chunk), 1, fp);
+                    unsigned char second = chunk;
+                    unsigned short tuple = (first << 8) | (0x00ff & second);
+                    //printf("tuple: %x\n", tuple);
+                    printf("FUNC LABEL %d\n", ((tuple >> (16 - bit_diff - line_len))) & 0b111);
+                }
             }
         } else if (line_len != 5) {
             if (bit_diff + line_len <= 8) {
@@ -370,6 +385,7 @@ int main(int argc, char **argv) {
                 fseek(fp, byte_diff, SEEK_SET);
                 fread(&chunk, sizeof(chunk), 1, fp);
                 unsigned char line = (chunk >> (8 - bit_diff - line_len)) & ((1 << line_len) - 1);
+                //printf("line: %x\n", line);
                 print_op(line, &internal_counter);
                 print_first(line, &internal_counter,symbol_pt, symbol_ls);
                 if (internal_counter < line_len) {
@@ -385,8 +401,10 @@ int main(int argc, char **argv) {
                 fread(&chunk, sizeof(chunk), 1, fp);
                 unsigned char second = chunk;
                 unsigned short tuple = (first << 8) | (0x00ff & second);
-                unsigned short line = (tuple >> (16 - bit_diff - line_len)) & ((1 << line_len) - 1);
+                //printf("tuple: %x",tuple);
+                unsigned short line = ((tuple >> (16 - bit_diff - line_len))) & ((1 << line_len) - 1);
                 int internal_counter = 0;
+                //printf("line: %x\n", line);
                 print_op(line, &internal_counter);
                 print_first(line, &internal_counter,symbol_pt, symbol_ls);
                 if (internal_counter < line_len) {
@@ -414,7 +432,7 @@ int main(int argc, char **argv) {
                 //printf("triple: %x\n", triple);
                 //printf("triple shift: %x\n", triple >> (24 - bit_diff - line_len));
                 unsigned int line = (triple >> (24 - bit_diff - line_len)) & ((1 << line_len) - 1);
-                //printf("%x\n", line);
+                //printf("line: %x\n", line);
                 int internal_counter = 0;
                 print_op(line, &internal_counter);
                 print_first(line, &internal_counter,symbol_pt, symbol_ls);
@@ -429,18 +447,26 @@ int main(int argc, char **argv) {
                 fseek(fp, byte_diff, SEEK_SET);
                 fread(&chunk, sizeof(chunk), 1, fp);
                 unsigned char first = chunk;
+                //printf("first chunk: %x\n", first);
                 fseek(fp, byte_diff + 1, SEEK_SET);
                 fread(&chunk, sizeof(chunk), 1, fp);
                 unsigned char second = chunk;
+                //printf("second chunk: %x\n", second);
                 fseek(fp, byte_diff + 2, SEEK_SET);
                 fread(&chunk, sizeof(chunk), 1, fp);
                 unsigned char third = chunk;
+                //printf("third chunk: %x\n", third);
                 fseek(fp, byte_diff + 3, SEEK_SET);
                 fread(&chunk, sizeof(chunk), 1, fp);
                 unsigned char fourth = chunk;
+                //printf("fourth chunk: %x\n", fourth);
                 unsigned int quad = (first << 24) | (second << 16) | (third << 8) | (0x00ff & fourth);
-                unsigned int line = (quad >> (24 - bit_diff - line_len)) & ((1 << line_len) - 1);
+                //printf("quad: %x\n", quad);
+                //printf("byte_diff: %d", byte_diff);
+                //printf("bit_diff: %x", bit_diff);
+                unsigned int line = (quad >> (32 - bit_diff - line_len)) & ((1 << line_len) - 1);
                 int internal_counter = 0;
+                //printf("line: %x\n", line);
                 print_op(line, &internal_counter);
                 print_first(line, &internal_counter,symbol_pt, symbol_ls);
                 if (internal_counter < line_len) {
