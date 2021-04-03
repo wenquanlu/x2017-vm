@@ -36,6 +36,8 @@ void print_op (unsigned int line, int * internal_counter) {
         printf("    CAL ");
     } else if (opcode == 0b010) {
         printf("    RET\n");
+    } else if (opcode == 0b011) {
+        printf("    REF ");
     } else if (opcode == 0b100) {
         printf("    ADD ");
     } else if (opcode == 0b101) {
@@ -95,7 +97,7 @@ void print_second(unsigned int line, int * internal_counter, int symbol_pt, char
         }
         *internal_counter += 7;
     } else if (data_type == 0b11) {
-        printf(" PT ");
+        printf(" PTR ");
         printf("%d\n", (line >> (*internal_counter + 2) & 0b11111));
         *internal_counter += 7;
     }
@@ -170,6 +172,9 @@ int main(int argc, char **argv) {
                 } else if (opcode == 0b010) {
                     printf("    RET\n"); //
                     curr_opco_type = ret;
+                } else if (opcode == 0b011) {
+                    printf("    REF");
+                    curr_opco_type = ref;
                 } else if (opcode == 0b100) {
                     printf("    ADD "); //
                     curr_opco_type = add;
@@ -215,7 +220,7 @@ int main(int argc, char **argv) {
                 printf("STK ");
             } else if (data_type == 0b11) {
                 curr_type = pt;
-                printf("PT ");
+                printf("PTR ");
             }
             ////////////////
             line_length += 2;
@@ -290,7 +295,7 @@ int main(int argc, char **argv) {
                 printf(" STK "); //
             } else if (data_type == 0b11) {
                 curr_type = pt;
-                printf(" PT "); //
+                printf(" PTR "); //
             }
             bit_count += 2;
             stage = 5;
