@@ -585,7 +585,7 @@ int main(int argc, char **argv) {
             if (op.opcode == 0b010) {
                 printf("    RET\n");
             } else if (op.opcode == 0b001) {
-                printf("    CAL ");
+                printf("    CAL");
                 print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
                 printf("\n");
             } else if (op.opcode == 0b101) {
