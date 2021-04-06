@@ -7,7 +7,7 @@ int main() {
         perror("Failed: ");
         return 1;
     }
-    
+    /*
     char x = 0b00000000;
     char y = 0b00000011;
     char z = 0b00000010;
@@ -18,7 +18,7 @@ int main() {
     char p = 0b00000100;
     char o = 0b00010000;
     char e = 0b01000101;
-
+    */
     /*
     char x = 0b00000000;
     char y = 0b00000010;
@@ -31,6 +31,20 @@ int main() {
     char a = 0b00010000;
     char i = 0b00001000;
     char o = 0b01000010; */
+
+    char x = 0b00000000;
+    char y = 0b00000000;
+    char z = 0b01000000;
+    char w = 0b10000000;
+    char l = 0b11010000;
+    char m = 0b00010000;
+    char k = 0b10000001;
+    char p = 0b10000001;
+    char a = 0b00001000;
+    char i = 0b10100100;
+    char o = 0b00010000;
+    char u = 0b00001000;
+    char v = 0b01000010;
     fwrite(&x, sizeof(x), 1, f);
     fwrite(&y,sizeof(y), 1 , f);
     fwrite(&z, 1,1, f);
@@ -39,8 +53,11 @@ int main() {
     fwrite(&m, 1,1, f);
     fwrite(&k, 1,1, f);
     fwrite(&p, 1,1, f);
+    fwrite(&a, 1,1, f);
+    fwrite(&i, 1,1, f);
     fwrite(&o, 1,1, f);
-    fwrite(&e, 1,1, f);
+    fwrite(&u, 1,1, f);
+    fwrite(&v, 1,1, f);
     //fwrite(&o, 1, 1, f);
     fflush(f);
     fclose(f);

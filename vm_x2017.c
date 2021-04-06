@@ -1,6 +1,21 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+struct operation {
+        unsigned char opcode;
+        unsigned char type1;
+        unsigned char opr1;
+        unsigned char type2;
+        unsigned char opr2;
+};
+
+struct func {
+    unsigned char label;
+    struct operation * op_ls;
+    struct func *next;
+    unsigned char len; ///consider the ordering of the struct
+};
+
 char get_bits(int bit_shift, int displacement, int length, FILE *fp, unsigned char * byte_buf) {
     if (bit_shift > 8 - length) {
         fseek(fp, -displacement, SEEK_END);
@@ -20,146 +35,204 @@ char get_bits(int bit_shift, int displacement, int length, FILE *fp, unsigned ch
     }
 }
 
-char get_symbol(int index) {
-    if (index <= 25) {
-        return 'A' + index;
-    } else {
-        return 'a' + index;
-    }
-}
-/*
-void print_op (unsigned int line, int * internal_counter) {
-    unsigned int opcode = line & 0b111;
-    if (opcode == 0b000) {
-        printf("    MOV ");
-    } else if (opcode == 0b001) {
-        printf("    CAL ");
-    } else if (opcode == 0b010) {
-        printf("    RET\n");
-    } else if (opcode == 0b011) {
-        printf("    REF ");
-    } else if (opcode == 0b100) {
-        printf("    ADD ");
-    } else if (opcode == 0b101) {
-        printf("    PRINT ");
-    } else if (opcode == 0b110) {
-        printf("    NOT ");
-    } else if (opcode == 0b111) {
-        printf("    EQU ");
-    }
-    *internal_counter += 3;
-}
-*/
-/*
-void print_first(unsigned int line, int * internal_counter, int symbol_pt, char * symbol_ls) {
-    unsigned int data_type = (line >> 3) & 0b11;
-    if (data_type == 0b00) {
-        printf("VAL ");
-        printf("%d", (line >> (5) & 0b11111111));
-        *internal_counter += 10;
-    } else if (data_type == 0b01) {
-        printf("REG ");
-        printf("%d", (line >> (5) & 0b111));
-        *internal_counter += 5;
-    } else if (data_type == 0b10) {
-        printf("STK ");
-        char data = line >> (5) & 0b11111;
-        for (int i = 0; i < symbol_pt; i++) {
-                if (data == symbol_ls[i]) {
-                    printf("%c", get_symbol(i));
-                }
-        }
-        *internal_counter += 7;
-    } else if (data_type == 0b11) {
-        printf("PTR ");
-        char data = (line >> (5)) & 0b11111;
-        for (int i = 0; i < symbol_pt; i++) {
-                if (data == symbol_ls[i]) {
-                    printf("%c", get_symbol(i));
-                }
-        }
-        *internal_counter += 7;
-    }
+int get_index(int stk_index, int symbol_index) {
+    return (stk_index) * 34 + 2 + symbol_index;
 }
 
-
-
-void print_second(unsigned int line, int * internal_counter, int symbol_pt, char * symbol_ls) {
-    unsigned int data_type = (line >> (*internal_counter)) & 0b11;
-    if (data_type == 0b00) {
-        printf(" VAL ");
-        //printf("%d", *internal_counter);
-        printf("%d\n", ((line >> (*internal_counter + 2)) & 0b11111111));
-        *internal_counter += 10;
-    } else if (data_type == 0b01) {
-        printf(" REG ");
-        printf("%d\n", (line >> (*internal_counter + 2) & 0b111));
-        *internal_counter += 5;
-    } else if (data_type == 0b10) {
-        printf(" STK ");
-        char data = line >> (*internal_counter + 2) & 0b11111;
-        for (int i = 0; i < symbol_pt; i++) {
-                if (data == symbol_ls[i]) {
-                    printf("%c\n", get_symbol(i));
-                }
-        }
-        *internal_counter += 7;
-    } else if (data_type == 0b11) {
-        printf(" PTR ");
-        char data = line >> (*internal_counter + 2) & 0b11111;
-        for (int i = 0; i < symbol_pt; i++) {
-                if (data == symbol_ls[i]) {
-                    printf("%c\n", get_symbol(i));
-                }
-        }
-        *internal_counter += 7;
-    }
-}
-*/
-void print_op(unsigned char data_type, unsigned char data, char * symbol_ls, int symbol_pt) {
-    if (data_type == 0b00) {
-        printf(" VAL %d", data); //
-    } else if (data_type == 0b01) {
-        printf(" REG %d", data); //
-    } else if (data_type == 0b10) {
-        printf(" STK "); //
-        for (int i = 0; i < symbol_pt; i++) {
-            if (symbol_ls[i] == data) {
-                printf("%c", get_symbol(i));
-                break;
-            }
-        }
-    } else if (data_type == 0b11) {
-        printf(" PTR "); //
-        for (int i = 0; i < symbol_pt; i++) {
-            if (symbol_ls[i] == data) {
-                printf("%c", get_symbol(i));
-                break;
-            }
-        }
-    }
+int get_stk_pt_index(int stk_index) {
+    return (stk_index) * 34 + 1;
 }
 
+int get_stk_func_index(int stk_index) {
+    return (stk_index) * 34;
+}
+
+struct func * get_entry(struct func * func_ls) {
+    struct func * pt = func_ls;
+    while (pt) {
+        if (pt -> label == 0b000) {
+            return pt;
+        }
+        pt = pt -> next;
+    }
+    exit(1);
+}
+
+struct func * get_func(struct func * func_ls, char func_label) {
+    struct func * pt = func_ls;
+    while (pt) {
+        if (pt -> label == func_label) {
+            return pt;
+        }
+        pt = pt -> next;
+    }
+    exit(1);
+}
+
+void push_stack(char * ram, char * reg_bank, struct func * this_func) {
+    if (get_index(reg_bank[5], 31) > 255) {
+        exit(1);
+    }
+    ram[get_stk_func_index(reg_bank[5])] = this_func -> label;
+    ram[get_stk_pt_index(reg_bank[5])] = 0;
+    reg_bank[5] ++;
+}
+
+int is_cal(struct operation this_op) {
+    return this_op.opcode == 0b001;
+}
+
+int is_ret(struct operation this_op) {
+    return this_op.opcode == 0b010;
+}
+
+char get_func_label(struct operation this_op) {
+    return this_op.opr1;
+}
+
+char get_pointer(char * reg_bank, char symbol) {
+    char stk_index = reg_bank[5] - 1;
+    return (stk_index << 5) + symbol;
+}
+
+void execute(struct operation this_op, char * ram, char * reg_bank) {
+    //to be implemented
+    if (this_op.opcode == 0b000) {
+        if (this_op.type1 == 0b01 && this_op.type2 == 0b00) {
+            int reg = this_op.opr1;
+            reg_bank[reg] = this_op.opr2;
+        } else if (this_op.type1 == 0b10 && this_op.type2 == 0b01) {
+            int symbol = this_op.opr1;
+            int stk_index = reg_bank[5] - 1;
+            int symbol_index = get_index(stk_index, symbol);
+            int reg = this_op.opr2;
+            ram[symbol_index] = reg_bank[reg];
+        } else if (this_op.type1 == 0b01 && this_op.type2 == 0b11) {
+            int curr_stk_index = reg_bank[5] - 1;
+            char ptr = ram[get_index(curr_stk_index, this_op.opr2)];
+            char ptr_stk_index = (ptr >> 5) & 0b00000111;
+            char ptr_sym_index = (ptr & 0b00011111);
+            int reg = this_op.opr1;
+            reg_bank[reg] = ram[get_index(ptr_stk_index, ptr_sym_index)];
+        } else if (this_op.type1 == 0b11 && this_op.type2 == 0b01) {
+            int reg = this_op.opr2;
+            int curr_stk_index = reg_bank[5] - 1;
+            char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
+            char ptr_stk_index = (ptr >> 5) & 0b00000111;
+            char ptr_sym_index = (ptr & 0b00011111);
+            ram[get_index(ptr_stk_index, ptr_sym_index)] = reg_bank[reg];
+        } else if (this_op.type1 == 0b10 && this_op.type2 == 0b00) {
+            int curr_stk_index = reg_bank[5] - 1;
+            ram[get_index(curr_stk_index, this_op.opr1)] = this_op.opr2;
+        } else if (this_op.type1 == 0b11 && this_op.type2 == 0b00) {
+            int curr_stk_index = reg_bank[5] - 1;
+            char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
+            char ptr_stk_index = (ptr >> 5) & 0b00000111;
+            char ptr_sym_index = (ptr & 0b00011111);
+            ram[get_index(ptr_stk_index, ptr_sym_index)] = this_op.opr2;
+        } else if (this_op.type1 == 0b01 && this_op.type2 == 0b10) {
+            int symbol = this_op.opr2;
+            int stk_index = reg_bank[5] - 1;
+            int symbol_index = get_index(stk_index, symbol);
+            int reg = this_op.opr1;
+            reg_bank[reg] = ram[symbol_index];
+        } else if (this_op.type1 == 0b11 && this_op.type2 == 0b11) {
+            int curr_stk_index = reg_bank[5] - 1;
+            int dest_ptr = ram[get_index(curr_stk_index, this_op.opr1)];
+            int src_ptr = ram[get_index(curr_stk_index, this_op.opr2)];
+            int dest_ptr_stk_index = (dest_ptr >> 5) & 0b00000111;
+            int dest_ptr_sym_index = (dest_ptr & 0b00011111);
+            int src_ptr_stk_index = (src_ptr >> 5) & 0b00000111;
+            int src_ptr_sym_index = (src_ptr & 0b00011111);
+            ram[get_index(dest_ptr_stk_index, dest_ptr_sym_index)] =
+            ram[get_index(src_ptr_stk_index, src_ptr_sym_index)];
+        } else if (this_op.type1 == 0b11 && this_op.type2 == 0b10) {
+            int curr_stk_index = reg_bank[5] - 1;
+            char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
+            char ptr_stk_index = (ptr >> 5) & 0b00000111;
+            char ptr_sym_index = (ptr & 0b00011111);
+            ram[get_index(ptr_stk_index, ptr_sym_index)] = 
+            ram[get_index(curr_stk_index, this_op.opr2)];
+        } else if (this_op.type1 == 0b10 && this_op.type2 == 0b11) {
+            int curr_stk_index = reg_bank[5] - 1;
+            char ptr = ram[get_index(curr_stk_index, this_op.opr2)];
+            char ptr_stk_index = (ptr >> 5) & 0b00000111;
+            char ptr_sym_index = (ptr & 0b00011111);
+            ram[get_index(curr_stk_index, this_op.opr1)] = 
+            ram[get_index(ptr_stk_index, ptr_sym_index)];
+        } else if (this_op.type1 == 0b10 && this_op.type2 == 0b10) {
+            int stk_index = reg_bank[5] - 1;
+            ram[get_index(stk_index, this_op.opr1)] = ram[get_index(stk_index, this_op.opr2)];
+        } else if (this_op.type1 == 0b01 && this_op.type2 == 0b00) {
+            int reg = this_op.opr1;
+            reg_bank[reg] = this_op.opr2;
+        } else if (this_op.type1 == 0b01 && this_op.type2 == 0b01) {
+            int reg_dest = this_op.opr1;
+            int reg_src = this_op.opr2;
+            reg_bank[reg_dest] = reg_bank[reg_src];
+        }
+
+    } else if (this_op.opcode == 0b011) {
+        if (this_op.type1 == 0b01 && this_op.type2 == 0b10) {
+            char address = get_pointer(reg_bank, this_op.opr2);
+            int reg = this_op.opr1;
+            reg_bank[reg] = address;
+        } else if (this_op.type1 == 0b10 && this_op.type2 == 0b10) {
+            char address = get_pointer(reg_bank, this_op.opr2);
+            int stk_index = reg_bank[5] - 1;
+            ram[get_index(stk_index, this_op.opr1)] = address;
+        } else if (this_op.type1 == 0b11 && this_op.type2 == 0b10) {
+            char address = get_pointer(reg_bank, this_op.opr2);
+            int curr_stk_index = reg_bank[5] - 1;
+            char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
+            char ptr_stk_index = (ptr >> 5) & 0b00000111;
+            char ptr_sym_index = (ptr & 0b00011111);
+            ram[get_index(ptr_stk_index, ptr_sym_index)] = address;
+        } else {
+            exit(1);
+        }
+    } else if (this_op.opcode == 0b100) {
+        if (this_op.type1 == 0b01 && this_op.type2 == 0b01) {
+            int reg1 = this_op.opr1;
+            int reg2 = this_op.opr2;
+            reg_bank[reg1] = reg_bank[reg1] + reg_bank[reg2];
+        } else {
+            exit(1);
+        }
+    } else if (this_op.opcode == 0b101) {
+        if (this_op.type1 == 0b01) {
+            int reg = this_op.opr1;
+            unsigned int content = reg_bank[reg];
+            printf("%u\n", content);
+        } else if (this_op.type1 == 0b10) {
+            int stk_index = reg_bank[5] - 1;
+            unsigned int content = ram[get_index(stk_index, this_op.opr1)];
+            printf("%u\n", content);
+        } else if (this_op.type1 == 0b11) {
+            int curr_stk_index = reg_bank[5] - 1;
+            char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
+            char ptr_stk_index = (ptr >> 5) & 0b00000111;
+            char ptr_sym_index = (ptr & 0b00011111);
+            unsigned int content = ram[get_index(ptr_stk_index, ptr_sym_index)];
+            printf("%u\n", content);
+        } else {
+            exit(1);
+        }
+    } else if (this_op.opcode == 0b110) {
+        int reg = this_op.opr1;
+        reg_bank[reg] = ~reg_bank[reg];
+    } else if (this_op.opcode == 0b111) {
+        int reg = this_op.opr1;
+        if (reg_bank[reg] == 0) {
+            reg_bank[reg] = 1;
+        } else {
+            reg_bank[reg] = 0;
+        }
+    }
+}
 
 int main(int argc, char **argv) {
-    struct operation {
-        unsigned char opcode;
-        unsigned char type1;
-        unsigned char opr1;
-        unsigned char type2;
-        unsigned char opr2;
-    };
 
-    struct func {
-        unsigned char label;
-        struct operation * op_ls;
-        struct func *next;
-        unsigned char len;
-    };
-
-    //char mem[256];
-    //char * data_mem = (char *) malloc(45*sizeof(char));
-    //int capacity = 45;
     FILE *fp = fopen(argv[1], "rb");
     int size = 0;
     fseek(fp, 0, SEEK_END);
@@ -182,13 +255,10 @@ int main(int argc, char **argv) {
     enum opera_type curr_type;
     enum opco_type curr_opco_type;
     int symbol_pt = 0;
-    //int line_counter = 0;
-    //char line_length = 0;
     struct func * func_ls = NULL;
     struct func * this_func;
     struct operation * this_op;
     struct operation * this_op_ls;
-    //char line_ls[30];
     while (1) {
         int displacement = bit_count / 8 + 1;
         int inbyte_dis;
@@ -196,12 +266,9 @@ int main(int argc, char **argv) {
         if (stage == 1) {
             if (!in_func) {
                 if (size*8 - bit_count < 8) {
-                    //line_ls[line_counter] = size*8 - bit_count;
-                    //line_counter++;
                     break;
                 }
                 this_func = (struct func *) malloc(sizeof(struct func));
-                this_op = (struct operation *) malloc(sizeof(struct operation));
                 func_length = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
                 this_op_ls = (struct operation *) malloc(sizeof(struct operation) * func_length);
                 this_func -> len = func_length;
@@ -209,8 +276,7 @@ int main(int argc, char **argv) {
                 bit_count += 5;
                 stage = 1;
             }else if (func_length == func_pt) {
-                unsigned char func = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); //
-                //printf("FUNC LABEL %d\n", func); //
+                unsigned char func = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
                 this_func -> op_ls = this_op_ls;
                 this_func -> label = func;
                 this_func -> next = func_ls;
@@ -220,37 +286,25 @@ int main(int argc, char **argv) {
                 func_length = 0;
                 func_pt = 0;
                 stage = 1;  
-                /////////////////////
-                //line_ls[line_counter] = 3;
-                //line_counter ++;
-                //line_length = 0;
-                ////////////////////
 
             } else  {
+                this_op = (struct operation *) malloc(sizeof(struct operation));
                 unsigned char opcode = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
                 if (opcode == 0b000) {
-                    //printf("    MOV "); //
                     curr_opco_type = mov;
                 } else if (opcode == 0b001) {
-                    //printf("    CAL "); //
                     curr_opco_type = cal;
                 } else if (opcode == 0b010) {
-                    //printf("    RET\n"); //
                     curr_opco_type = ret;
                 } else if (opcode == 0b011) {
-                    //printf("    REF");
                     curr_opco_type = ref;
                 } else if (opcode == 0b100) {
-                    //printf("    ADD "); //
                     curr_opco_type = add;
                 } else if (opcode == 0b101) {
-                    //printf("    PRINT "); //
                     curr_opco_type = print;
                 } else if (opcode == 0b110) {
-                    //printf("    NOT "); //
                     curr_opco_type = not;
                 } else if (opcode == 0b111) {
-                    //printf("    EQU "); //
                     curr_opco_type = equ;
                 }
                 bit_count += 3;
@@ -258,361 +312,149 @@ int main(int argc, char **argv) {
                 if (opcode == 0b010) {
                     this_op -> opcode = 0b010;
                     this_op_ls[func_length - func_pt - 1] = *this_op;
+                    free(this_op);
                     stage = 1;
-                    ///////////////
-                    //line_ls[line_counter] = 5;
-                    //line_counter ++;
-                    ///////////////
-                    ///////////////
-                    //line_ls[line_counter] = 3;
-                    //line_counter ++;
-                    //line_length = 0;
-                    ///////////////
                 } else {
                     this_op -> opcode = opcode;
                 }
                 func_pt ++;
-                //////////////
-                //line_length = 3;
-                //////////////
             }
         } else if (stage == 2) {
             unsigned char data_type = get_bits(inbyte_dis, displacement, 2, fp, &byte_buf);
             if (data_type == 0b00) {
                 curr_type = val;
-                //printf("VAL ");
             } else if (data_type == 0b01) {
                 curr_type = reg;
-                //printf("REG ");
             } else if (data_type == 0b10) {
                 curr_type = stac;
-                //printf("STK ");
             } else if (data_type == 0b11) {
                 curr_type = pt;
-                //printf("PTR ");
             }
             this_op -> type1 = data_type;
-            ////////////////
-            //line_length += 2;
-            ////////////////
             bit_count += 2;
             stage = 3;
         } else if (stage == 3) {
             unsigned char data;
             if (curr_type == val) {
-                data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf); //
-                //printf("%d", data); //
+                data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf); 
                 bit_count += 8;
-                ////////////////
-                //line_length += 8;
-                ////////////////
             } else if (curr_type == reg) {
-                data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); //
-                //printf("%d", data); //
+                data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); 
                 bit_count += 3;
-                ////////////////
-                //line_length += 3;
-                ////////////////
             } else if (curr_type == stac) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
                 int exist = 0;
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
-                        //printf("%c", get_symbol(i)); //
                         exist = 1;
                     }
                 }
                 if (!exist) {
                     symbol_ls[symbol_pt] = data;
-                    //printf("%c", get_symbol(symbol_pt)); //
                     symbol_pt ++;
                 }
                 bit_count += 5;
-                ////////////////
-                //line_length += 5;
-                ////////////////
               
             } else if (curr_type == pt) {
-                data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
-                /*for (int i = 0; i < symbol_pt; i++) {
-                    if (data == symbol_ls[i]) {
-                        printf("%c\n", get_symbol(i));
-                    }
-                }*/
+                data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); 
                 bit_count += 5;
-                ////////////////
-                //line_length += 5;
-                ////////////////
             } 
             stage = 4;
             this_op -> opr1 = data;
             if (curr_opco_type == cal || curr_opco_type == print || 
             curr_opco_type == not || curr_opco_type == equ) {
                 stage = 1;
-                //printf("\n"); //
-                /////////////////
                 this_op_ls[func_length - func_pt] = *this_op;
-                //line_ls[line_counter] = line_length;
-                //line_counter ++;
-                //line_length = 0;
-                /////////////////
+                free(this_op);
             }
         
-            //don't forget to set instruction length in function here for unary operation
         } else if (stage == 4) {
             unsigned char data_type = get_bits(inbyte_dis, displacement, 2, fp, &byte_buf);
             if (data_type == 0b00) {
                 curr_type = val;
-                //printf(" VAL "); //
             } else if (data_type == 0b01) {
                 curr_type = reg;
-                //printf(" REG "); //
             } else if (data_type == 0b10) {
                 curr_type = stac;
-                //printf(" STK "); //
             } else if (data_type == 0b11) {
                 curr_type = pt;
-                //printf(" PTR "); //
             }
             this_op -> type2 = data_type;
             bit_count += 2;
             stage = 5;
-            ////////////////
-            //line_length += 2;
-            ////////////////
         } else if (stage == 5) {
             unsigned char data;
             if (curr_type == val) {
-                data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf); //
-                //printf("%d\n", data); //
+                data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf); 
                 bit_count += 8;
-                ////////////////
-                //line_length += 8;
-                ////////////////
             } else if (curr_type == reg) {
-                data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); //
-                //printf("%d\n", data); //
+                data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); 
                 bit_count += 3;
-                ////////////////
-                //line_length += 3;
-                ////////////////
             } else if (curr_type == stac) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
                 int exist = 0;
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
-                        //printf("%c\n", get_symbol(i)); //
                         exist = 1;
                     }
                 }
                 if (!exist) {
                     symbol_ls[symbol_pt] = data;
-                    //printf("%c\n", get_symbol(symbol_pt)); //
                     symbol_pt ++;
                 }
                 bit_count += 5;
-                ////////////////
-                //line_length += 5;
-                ////////////////
             } else if (curr_type == pt) {
-                data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
-                /*
-                for (int i = 0; i < symbol_pt; i++) {
-                    if (data == symbol_ls[i]) {
-                        printf("%c\n", get_symbol(i));
-                    }
-                }*/
+                data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
                 bit_count += 5;
-                ////////////////
-                //line_length += 5;
-                ////////////////
             }
             stage = 1;
-            /////////////////
-            //line_ls[line_counter] = line_length;
-            //line_counter ++;
-            //line_length = 0;
             this_op -> opr2 = data;
             this_op_ls[func_length - func_pt] = *this_op;
-            /////////////////
-            //don't forget to set instruction length in function here 
+            free(this_op);
         }
     }
-/*
-    //printf("########################\n");
-    fseek(fp, 0, SEEK_SET);
-    unsigned char chunk;
-    int po_dis = line_ls[line_counter - 1];
-    for (int i = line_counter-2; i >= 0; i--) {
-        int bit_diff = po_dis%8;
-        int byte_diff = po_dis/8;
-        po_dis += line_ls[i];
-        int line_len = line_ls[i];
-        fseek(fp, byte_diff, SEEK_SET);
-        fread(&chunk, sizeof(chunk), 1, fp);
-        if (line_len == 3) {
-            if (line_ls[i - 1] == 5) {
-                printf("    RET\n");
-            } else {
-                //printf("%x\n", (chunk >> bit_diff) & 0b111);
-                if (bit_diff + 3 <= 8) {
-                    //printf("chunk: %x, bit_diff: %x\n", chunk, bit_diff);
-                    //printf("last_bug: %x", (chunk >> 2));
-                    printf("FUNC LABEL %d\n", (chunk >> (8-bit_diff - 3)) & 0b111);
-                } else {
-                    fseek(fp, byte_diff, SEEK_SET);
-                    fread(&chunk, sizeof(chunk), 1, fp);
-                    unsigned char first = chunk;
-                    fseek(fp, byte_diff + 1, SEEK_SET);
-                    fread(&chunk, sizeof(chunk), 1, fp);
-                    unsigned char second = chunk;
-                    unsigned short tuple = (first << 8) | (0x00ff & second);
-                    //printf("tuple: %x\n", tuple);
-                    printf("FUNC LABEL %d\n", ((tuple >> (16 - bit_diff - line_len))) & 0b111);
-                }
-            }
-        } else if (line_len != 5) {
-            if (bit_diff + line_len <= 8) {
-                int internal_counter = 0;
-                fseek(fp, byte_diff, SEEK_SET);
-                fread(&chunk, sizeof(chunk), 1, fp);
-                unsigned char line = (chunk >> (8 - bit_diff - line_len)) & ((1 << line_len) - 1);
-                //printf("line: %x\n", line);
-                print_op(line, &internal_counter);
-                print_first(line, &internal_counter,symbol_pt, symbol_ls);
-                if (internal_counter < line_len) {
-                    print_second(line, &internal_counter,symbol_pt, symbol_ls);
-                } else {
-                    printf("\n");
-                }
-            } else if (bit_diff + line_len > 8 && bit_diff + line_len <= 16) {
-                fseek(fp, byte_diff, SEEK_SET);
-                fread(&chunk, sizeof(chunk), 1, fp);
-                unsigned char first = chunk;
-                fseek(fp, byte_diff + 1, SEEK_SET);
-                fread(&chunk, sizeof(chunk), 1, fp);
-                unsigned char second = chunk;
-                unsigned short tuple = (first << 8) | (0x00ff & second);
-                //printf("tuple: %x",tuple);
-                unsigned short line = ((tuple >> (16 - bit_diff - line_len))) & ((1 << line_len) - 1);
-                int internal_counter = 0;
-                //printf("line: %x\n", line);
-                print_op(line, &internal_counter);
-                print_first(line, &internal_counter,symbol_pt, symbol_ls);
-                if (internal_counter < line_len) {
-                    print_second(line, &internal_counter,symbol_pt, symbol_ls);
-                } else {
-                    printf("\n");
-                }
 
-
-            } else if (bit_diff + line_len > 16 && bit_diff + line_len <= 24) {
-                //printf("bit_diff: %d, line_len: %d\n",bit_diff, line_len);
-                fseek(fp, byte_diff, SEEK_SET);
-                fread(&chunk, sizeof(chunk), 1, fp);
-                unsigned char first = chunk;
-                //printf("first: %x\n", first);
-                fseek(fp, byte_diff + 1, SEEK_SET);
-                fread(&chunk, sizeof(chunk), 1, fp);
-                unsigned char second = chunk;
-                //printf("second: %x\n", second);
-                fseek(fp, byte_diff + 2, SEEK_SET);
-                fread(&chunk, sizeof(chunk), 1, fp);
-                unsigned char third = chunk;
-                //printf("third: %x\n", third);
-                unsigned int triple = (first << 16) | (second << 8) | (0x00ff & third);
-                //printf("triple: %x\n", triple);
-                //printf("triple shift: %x\n", triple >> (24 - bit_diff - line_len));
-                unsigned int line = (triple >> (24 - bit_diff - line_len)) & ((1 << line_len) - 1);
-                //printf("line: %x\n", line);
-                int internal_counter = 0;
-                print_op(line, &internal_counter);
-                print_first(line, &internal_counter,symbol_pt, symbol_ls);
-                if (internal_counter < line_len) {
-                    print_second(line, &internal_counter,symbol_pt, symbol_ls);
-                } else {
-                    printf("\n");
-                }
-
-
-            } else if (bit_diff + line_len > 24 && bit_diff + line_len <= 36) {
-                fseek(fp, byte_diff, SEEK_SET);
-                fread(&chunk, sizeof(chunk), 1, fp);
-                unsigned char first = chunk;
-                //printf("first chunk: %x\n", first);
-                fseek(fp, byte_diff + 1, SEEK_SET);
-                fread(&chunk, sizeof(chunk), 1, fp);
-                unsigned char second = chunk;
-                //printf("second chunk: %x\n", second);
-                fseek(fp, byte_diff + 2, SEEK_SET);
-                fread(&chunk, sizeof(chunk), 1, fp);
-                unsigned char third = chunk;
-                //printf("third chunk: %x\n", third);
-                fseek(fp, byte_diff + 3, SEEK_SET);
-                fread(&chunk, sizeof(chunk), 1, fp);
-                unsigned char fourth = chunk;
-                //printf("fourth chunk: %x\n", fourth);
-                unsigned int quad = (first << 24) | (second << 16) | (third << 8) | (0x00ff & fourth);
-                //printf("quad: %x\n", quad);
-                //printf("byte_diff: %d", byte_diff);
-                //printf("bit_diff: %x", bit_diff);
-                unsigned int line = (quad >> (32 - bit_diff - line_len)) & ((1 << line_len) - 1);
-                int internal_counter = 0;
-                //printf("line: %x\n", line);
-                print_op(line, &internal_counter);
-                print_first(line, &internal_counter,symbol_pt, symbol_ls);
-                if (internal_counter < line_len) {
-                    print_second(line, &internal_counter,symbol_pt, symbol_ls);
-                } else {
-                    printf("\n");
-                }
-            }
+    /*
+    struct stk_fm {
+        char stk_symbols[32];
+        char stk_pt;
+        struct func * function;
+    };
+    */
+    char ram[256] = {};
+    char reg_bank[8] = {}; //reg_bank[5] stores the total size of stack frames
+    struct func * entry = get_entry(func_ls);
+    push_stack(ram, reg_bank, entry);
+    while (1) {
+        int stk_index = reg_bank[5] - 1;
+        //struct func * fn_pt = get_func(func_ls, ram[get_stk_func_index(stk_index)]);
+        int pc = reg_bank[7];
+        struct operation this_op 
+        = get_func(func_ls, ram[get_stk_func_index(stk_index)]) -> op_ls[pc];
+        ram[get_stk_pt_index(stk_index)] ++;
+        reg_bank[7] ++;
+        if (is_cal(this_op)) {          
+            push_stack(ram, reg_bank, get_func(func_ls, get_func_label(this_op)));
+            reg_bank[7] = 0;
+            continue;
         }
 
+        if (is_ret(this_op)) {
+            reg_bank[5] --;
+            if (reg_bank[5] == 0) {
+                break;
+            }
+            reg_bank[7] = ram[get_stk_pt_index(reg_bank[5] - 1)];
+            continue;
+        }
+        execute(this_op, ram, reg_bank);
     }
-*/
-    struct func * fpt = func_ls;
-    //printf("%d", fpt -> op_ls[0].opcode);
 
-    while (fpt) {
-        printf("FUNC LABEL %d\n", fpt -> label);
-        for (int i = 0; i < fpt -> len; i++) {
-            struct operation op = fpt -> op_ls[i];
-            if (op.opcode == 0b010) {
-                printf("    RET\n");
-            } else if (op.opcode == 0b001) {
-                printf("    CAL ");
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
-                printf("\n");
-            } else if (op.opcode == 0b101) {
-                printf("    PRINT");
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
-                printf("\n");
-            } else if (op.opcode == 0b110) {
-                printf("    NOT");
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
-                printf("\n");
-            } else if (op.opcode == 0b111) {
-                printf("    EQU");
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
-                printf("\n");
-            } else if (op.opcode == 0b000) {
-                printf("    MOV");
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
-                print_op(op.type2, op.opr2, symbol_ls, symbol_pt);
-                printf("\n");
-            } else if (op.opcode == 0b011) {
-                printf("    REF");
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
-                print_op(op.type2, op.opr2, symbol_ls, symbol_pt);
-                printf("\n");
-            } else if (op.opcode == 0b100) {
-                printf("    ADD");
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
-                print_op(op.type2, op.opr2, symbol_ls, symbol_pt);
-                printf("\n");
-            }
-        }
-        fpt = fpt -> next;
+    struct func * fpt2 = func_ls;
+    while (fpt2) {
+        struct func * next_pt = fpt2 -> next;
+        free(fpt2 -> op_ls);
+        free(fpt2);
+        fpt2 = next_pt;
     }
 }

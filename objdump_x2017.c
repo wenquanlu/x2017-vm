@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
         unsigned char label;
         struct operation * op_ls;
         struct func *next;
-        unsigned char len;
+        unsigned char len; ///consider the ordering of the struct
     };
 
     //char mem[256];
