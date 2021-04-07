@@ -125,7 +125,7 @@ void print_op(unsigned char data_type, unsigned char data, char * symbol_ls, int
         printf(" STK "); //
         for (int i = 0; i < symbol_pt; i++) {
             if (symbol_ls[i] == data) {
-                printf("%c", get_symbol(i));
+                printf("%c", get_symbol(symbol_pt - i - 1));
                 break;
             }
         }
@@ -133,7 +133,7 @@ void print_op(unsigned char data_type, unsigned char data, char * symbol_ls, int
         printf(" PTR "); //
         for (int i = 0; i < symbol_pt; i++) {
             if (symbol_ls[i] == data) {
-                printf("%c", get_symbol(i));
+                printf("%c", get_symbol(symbol_pt - i - 1));
                 break;
             }
         }
@@ -321,6 +321,10 @@ int main(int argc, char **argv) {
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
                         //printf("%c", get_symbol(i)); //
+                        for (int j = i; j < symbol_pt - 1; j++) {
+                            symbol_ls[j] = symbol_ls[j+1];
+                        }
+                        symbol_ls[symbol_pt - 1] = data;
                         exist = 1;
                     }
                 }
@@ -336,6 +340,15 @@ int main(int argc, char **argv) {
               
             } else if (curr_type == pt) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
+                for (int i = 0; i < symbol_pt; i++) {
+                    if (data == symbol_ls[i]) {
+                        //printf("%c", get_symbol(i)); //
+                        for (int j = i; j < symbol_pt - 1; j++) {
+                            symbol_ls[j] = symbol_ls[j+1];
+                        }
+                        symbol_ls[symbol_pt - 1] = data;
+                    }
+                }
                 /*for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
                         printf("%c\n", get_symbol(i));
@@ -405,6 +418,10 @@ int main(int argc, char **argv) {
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
                         //printf("%c\n", get_symbol(i)); //
+                        for (int j = i; j < symbol_pt - 1; j++) {
+                            symbol_ls[j] = symbol_ls[j+1];
+                        }
+                        symbol_ls[symbol_pt - 1] = data;
                         exist = 1;
                     }
                 }
@@ -419,6 +436,15 @@ int main(int argc, char **argv) {
                 ////////////////
             } else if (curr_type == pt) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); //
+                for (int i = 0; i < symbol_pt; i++) {
+                    if (data == symbol_ls[i]) {
+                        //printf("%c", get_symbol(i)); //
+                        for (int j = i; j < symbol_pt - 1; j++) {
+                            symbol_ls[j] = symbol_ls[j+1];
+                        }
+                        symbol_ls[symbol_pt - 1] = data;
+                    }
+                }
                 /*
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
