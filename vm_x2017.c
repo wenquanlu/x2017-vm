@@ -200,7 +200,10 @@ void execute(struct operation this_op, char * ram, char * reg_bank) {
             exit(1);
         }
     } else if (this_op.opcode == 0b101) {
-        if (this_op.type1 == 0b01) {
+        if (this_op.type1 == 0b00) {
+            unsigned int content = this_op.opr1;
+            printf("%u\n", content);
+        } else if (this_op.type1 == 0b01) {
             int reg = this_op.opr1;
             unsigned int content = reg_bank[reg];
             printf("%u\n", content);
