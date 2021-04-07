@@ -201,22 +201,22 @@ void execute(struct operation this_op, char * ram, char * reg_bank) {
         }
     } else if (this_op.opcode == 0b101) {
         if (this_op.type1 == 0b00) {
-            unsigned int content = this_op.opr1;
+            unsigned int content = (unsigned) this_op.opr1;
             printf("%u\n", content);
         } else if (this_op.type1 == 0b01) {
             int reg = this_op.opr1;
-            unsigned int content = reg_bank[reg];
+            unsigned int content = (unsigned) reg_bank[reg];
             printf("%u\n", content);
         } else if (this_op.type1 == 0b10) {
             int stk_index = reg_bank[5] - 1;
-            unsigned int content = ram[get_index(stk_index, this_op.opr1)];
+            unsigned int content = (unsigned) ram[get_index(stk_index, this_op.opr1)];
             printf("%u\n", content);
         } else if (this_op.type1 == 0b11) {
             int curr_stk_index = reg_bank[5] - 1;
             char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
             char ptr_stk_index = (ptr >> 5) & 0b00000111;
             char ptr_sym_index = (ptr & 0b00011111);
-            unsigned int content = ram[get_index(ptr_stk_index, ptr_sym_index)];
+            unsigned int content = (unsigned) ram[get_index(ptr_stk_index, ptr_sym_index)];
             printf("%u\n", content);
         } else {
             exit(1);
