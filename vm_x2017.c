@@ -70,7 +70,7 @@ struct func * get_func(struct func * func_ls, char func_label) {
 }
 
 void push_stack(unsigned char * ram, unsigned char * reg_bank, struct func * this_func) {
-    if (get_index(reg_bank[5], 31) > 255) {
+    if (get_index(reg_bank[5], 33) > 255) {
         exit(1);
     }
     ram[get_stk_func_index(reg_bank[5])] = this_func -> label;
