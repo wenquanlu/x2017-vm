@@ -66,23 +66,13 @@ void print_op(unsigned char data_type, unsigned char data, char * symbol_ls, int
     }
 }
 
-
-int main(int argc, char **argv) {
-    FILE *fp = fopen(argv[1], "rb");
-    if (fp == NULL) {
-        exit(1);
-    }
-    int size = 0;
-    fseek(fp, 0, SEEK_END);
-    size = ftell(fp);
-    fseek(fp, -1, SEEK_END);
+int parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size) {
     unsigned char byte_buf;
     int stage = 1;
     int in_func = 0;
     int func_pt = 0;
     int bit_count = 0;  
     int func_length;
-    char symbol_ls[52];
     enum opera_type {
         val, reg, stac, pt
     };
@@ -92,7 +82,6 @@ int main(int argc, char **argv) {
     enum opera_type curr_type;
     enum opco_type curr_opco_type;
     int symbol_pt = 0;
-    struct func * func_ls = NULL;
     struct func * this_func;
     struct operation * this_op;
     struct operation * this_op_ls;
@@ -116,8 +105,8 @@ int main(int argc, char **argv) {
                 unsigned char func = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
                 this_func -> op_ls = this_op_ls;
                 this_func -> label = func;
-                this_func -> next = func_ls;
-                func_ls = this_func;
+                this_func -> next = *func_ls;
+                *func_ls = this_func;
                 bit_count += 3;
                 in_func = 0;
                 func_length = 0;
@@ -274,6 +263,23 @@ int main(int argc, char **argv) {
             free(this_op);
         }
     }
+    return symbol_pt;
+}
+
+
+int main(int argc, char **argv) {
+    FILE *fp = fopen(argv[1], "rb");
+    if (fp == NULL) {
+        exit(1);
+    }
+    int size = 0;
+    fseek(fp, 0, SEEK_END);
+    size = ftell(fp);
+    fseek(fp, -1, SEEK_END);
+
+    char symbol_ls[52];
+    struct func * func_ls = NULL;
+    int symbol_pt = parse_binary(fp, &func_ls, symbol_ls, size);
     struct func * fpt = func_ls;
     while (fpt) {
         printf("FUNC LABEL %d\n", fpt -> label);
