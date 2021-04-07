@@ -69,7 +69,7 @@ struct func * get_func(struct func * func_ls, char func_label) {
     exit(1);
 }
 
-void push_stack(char * ram, char * reg_bank, struct func * this_func) {
+void push_stack(unsigned char * ram, unsigned char * reg_bank, struct func * this_func) {
     if (get_index(reg_bank[5], 31) > 255) {
         exit(1);
     }
@@ -90,12 +90,12 @@ char get_func_label(struct operation this_op) {
     return this_op.opr1;
 }
 
-char get_pointer(char * reg_bank, char symbol) {
+char get_pointer(unsigned char * reg_bank, char symbol) {
     char stk_index = reg_bank[5] - 1;
     return (stk_index << 5) + symbol;
 }
 
-void execute(struct operation this_op, char * ram, char * reg_bank) {
+void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_bank) {
     //to be implemented
     if (this_op.opcode == 0b000) {
         if (this_op.type1 == 0b01 && this_op.type2 == 0b00) {
@@ -201,22 +201,22 @@ void execute(struct operation this_op, char * ram, char * reg_bank) {
         }
     } else if (this_op.opcode == 0b101) {
         if (this_op.type1 == 0b00) {
-            unsigned int content = (unsigned) this_op.opr1;
+            unsigned int content = this_op.opr1;
             printf("%u\n", content);
         } else if (this_op.type1 == 0b01) {
             int reg = this_op.opr1;
-            unsigned int content = (unsigned) reg_bank[reg];
+            unsigned int content = reg_bank[reg];
             printf("%u\n", content);
         } else if (this_op.type1 == 0b10) {
             int stk_index = reg_bank[5] - 1;
-            unsigned int content = (unsigned) ram[get_index(stk_index, this_op.opr1)];
+            unsigned int content = ram[get_index(stk_index, this_op.opr1)];
             printf("%u\n", content);
         } else if (this_op.type1 == 0b11) {
             int curr_stk_index = reg_bank[5] - 1;
             char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
             char ptr_stk_index = (ptr >> 5) & 0b00000111;
             char ptr_sym_index = (ptr & 0b00011111);
-            unsigned int content = (unsigned) ram[get_index(ptr_stk_index, ptr_sym_index)];
+            unsigned int content = ram[get_index(ptr_stk_index, ptr_sym_index)];
             printf("%u\n", content);
         } else {
             exit(1);
@@ -420,8 +420,8 @@ int main(int argc, char **argv) {
         }
     }
 
-    char ram[256] = {};
-    char reg_bank[8] = {}; //reg_bank[5] stores the total size of stack frames
+    unsigned char ram[256] = {};
+    unsigned char reg_bank[8] = {}; //reg_bank[5] stores the total size of stack frames
     struct func * entry = get_entry(func_ls);
     push_stack(ram, reg_bank, entry);
     while (1) {
