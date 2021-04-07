@@ -266,21 +266,7 @@ int parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size) 
     return symbol_pt;
 }
 
-
-int main(int argc, char **argv) {
-    FILE *fp = fopen(argv[1], "rb");
-    if (fp == NULL) {
-        exit(1);
-    }
-    int size = 0;
-    fseek(fp, 0, SEEK_END);
-    size = ftell(fp);
-    fseek(fp, -1, SEEK_END);
-
-    char symbol_ls[52];
-    struct func * func_ls = NULL;
-    int symbol_pt = parse_binary(fp, &func_ls, symbol_ls, size);
-    struct func * fpt = func_ls;
+void print_code(struct func * fpt, char * symbol_ls, int symbol_pt) {
     while (fpt) {
         printf("FUNC LABEL %d\n", fpt -> label);
         for (int i = 0; i < fpt -> len; i++) {
@@ -322,7 +308,22 @@ int main(int argc, char **argv) {
         }
         fpt = fpt -> next;
     }
+}
 
+int main(int argc, char **argv) {
+    FILE *fp = fopen(argv[1], "rb");
+    if (fp == NULL) {
+        exit(1);
+    }
+    int size = 0;
+    fseek(fp, 0, SEEK_END);
+    size = ftell(fp);
+    fseek(fp, -1, SEEK_END);
+    char symbol_ls[52];
+    struct func * func_ls = NULL;
+    int symbol_pt = parse_binary(fp, &func_ls, symbol_ls, size);
+    struct func * fpt = func_ls;
+    print_code(fpt, symbol_ls, symbol_pt);
     struct func * fpt2 = func_ls;
     while (fpt2) {
         struct func * next_pt = fpt2 -> next;
