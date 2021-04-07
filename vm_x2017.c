@@ -237,6 +237,9 @@ void execute(struct operation this_op, char * ram, char * reg_bank) {
 int main(int argc, char **argv) {
 
     FILE *fp = fopen(argv[1], "rb");
+    if (fp == NULL) {
+        exit(1);
+    }
     int size = 0;
     fseek(fp, 0, SEEK_END);
     size = ftell(fp);
@@ -417,13 +420,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    /*
-    struct stk_fm {
-        char stk_symbols[32];
-        char stk_pt;
-        struct func * function;
-    };
-    */
     char ram[256] = {};
     char reg_bank[8] = {}; //reg_bank[5] stores the total size of stack frames
     struct func * entry = get_entry(func_ls);
