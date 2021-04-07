@@ -77,7 +77,6 @@ int main(int argc, char **argv) {
     size = ftell(fp);
     fseek(fp, -1, SEEK_END);
     unsigned char byte_buf;
-    fread(&byte_buf, sizeof(byte_buf), 1, fp);
     int stage = 1;
     int in_func = 0;
     int func_pt = 0;
