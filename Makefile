@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-fsanitize=address -Wvla -Wall -Werror -g -std=gnu11 -lasan -Os
+CFLAGS=-fsanitize=address -Wvla -Wall -Werror -s -std=gnu11 -lasan -Os
 
 # fill in all your make rules
 

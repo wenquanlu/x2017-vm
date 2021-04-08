@@ -16,6 +16,15 @@ struct func {
     struct func *next;
 };
 
+void free_all(struct func * fpt) {
+    while (fpt) {
+        struct func * next_pt = fpt -> next;
+        free(fpt -> op_ls);
+        free(fpt);
+        fpt = next_pt;
+    }
+}
+
 char get_bits(int bit_shift, int displacement, int length, FILE *fp, unsigned char * byte_buf) {
     if (bit_shift > 8 - length) {
         fseek(fp, -displacement, SEEK_END);
@@ -53,14 +62,15 @@ int get_stk_func_index(int stk_index) {
     return (stk_index) * 34;
 }
 
-struct func * get_entry(struct func * func_ls) {
+void check_entry(struct func * func_ls) {
     struct func * pt = func_ls;
     while (pt) {
         if (pt -> label == 0b000) {
-            return pt;
+            return;
         }
         pt = pt -> next;
     }
+    free_all(func_ls);
     exit(1);
 }
 
@@ -72,14 +82,16 @@ struct func * get_func(struct func * func_ls, char func_label) {
         }
         pt = pt -> next;
     }
+    free_all(func_ls);
     exit(1);
 }
 
-void push_stack(unsigned char * ram, unsigned char * reg_bank, struct func * this_func) {
+void push_stack(unsigned char * ram, unsigned char * reg_bank, unsigned char func_label, struct func * func_ls) {
     if (get_index(reg_bank[5], 33) > 255) {
+        free_all(func_ls);
         exit(1);
     }
-    ram[get_stk_func_index(reg_bank[5])] = this_func -> label;
+    ram[get_stk_func_index(reg_bank[5])] = func_label;
     ram[get_stk_pt_index(reg_bank[5])] = 0;
     reg_bank[5] ++;
 }
@@ -379,8 +391,8 @@ int main(int argc, char **argv) {
 
     unsigned char ram[256] = {};
     unsigned char reg_bank[8] = {}; //reg_bank[5] stores the total size of stack frames
-    struct func * entry = get_entry(func_ls);
-    push_stack(ram, reg_bank, entry);
+    check_entry(func_ls);
+    push_stack(ram, reg_bank, 0, func_ls);
     while (1) {
         int stk_index = reg_bank[5] - 1;
         int pc = reg_bank[7];
@@ -389,7 +401,7 @@ int main(int argc, char **argv) {
         ram[get_stk_pt_index(stk_index)] ++;
         reg_bank[7] ++;
         if (is_cal(this_op)) {          
-            push_stack(ram, reg_bank, get_func(func_ls, get_func_label(this_op)));
+            push_stack(ram, reg_bank, get_func_label(this_op), func_ls);
             reg_bank[7] = 0;
             continue;
         }
@@ -406,10 +418,5 @@ int main(int argc, char **argv) {
     }
 
     struct func * fpt2 = func_ls;
-    while (fpt2) {
-        struct func * next_pt = fpt2 -> next;
-        free(fpt2 -> op_ls);
-        free(fpt2);
-        fpt2 = next_pt;
-    }
+    free_all(fpt2);
 }
