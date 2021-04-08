@@ -39,6 +39,12 @@ int get_index(int stk_index, int symbol_index) {
     return (stk_index) * 34 + 2 + symbol_index;
 }
 
+int get_symbol_index(unsigned char * reg_bank, char symbol_index) {
+    int stk_index = reg_bank[5] - 1;
+    int int_symbol_index = symbol_index;
+    return (stk_index) * 34 + 2 + int_symbol_index;
+}
+
 int get_stk_pt_index(int stk_index) {
     return (stk_index) * 34 + 1;
 }
@@ -95,6 +101,14 @@ char get_pointer(unsigned char * reg_bank, char symbol) {
     return (stk_index << 5) + symbol;
 }
 
+int indirect(unsigned char * reg_bank, char ptr_symbol, unsigned char * ram) {
+    //int curr_stk_index = reg_bank[5] - 1;
+    char ptr = ram[get_symbol_index(reg_bank, ptr_symbol)];
+    char ptr_stk_index = (ptr >> 5) & 0b00000111;
+    char ptr_sym_index = (ptr & 0b00011111);
+    return get_index(ptr_stk_index, ptr_sym_index);
+}
+
 void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_bank) {
     //to be implemented
     if (this_op.opcode == 0b000) {
@@ -102,67 +116,67 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             int reg = this_op.opr1;
             reg_bank[reg] = this_op.opr2;
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b01) {
-            int symbol = this_op.opr1;
+            /*int symbol = this_op.opr1;
             int stk_index = reg_bank[5] - 1;
-            int symbol_index = get_index(stk_index, symbol);
+            int symbol_index = get_index(stk_index, symbol);*/
             int reg = this_op.opr2;
-            ram[symbol_index] = reg_bank[reg];
+            ram[get_symbol_index(reg_bank, this_op.opr1)] = reg_bank[reg];
         } else if (this_op.type1 == 0b01 && this_op.type2 == 0b11) {
-            int curr_stk_index = reg_bank[5] - 1;
+            /*int curr_stk_index = reg_bank[5] - 1;
             char ptr = ram[get_index(curr_stk_index, this_op.opr2)];
             char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111);
+            char ptr_sym_index = (ptr & 0b00011111);*/
             int reg = this_op.opr1;
-            reg_bank[reg] = ram[get_index(ptr_stk_index, ptr_sym_index)];
+            reg_bank[reg] = ram[indirect(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b01) {
             int reg = this_op.opr2;
-            int curr_stk_index = reg_bank[5] - 1;
+            /*int curr_stk_index = reg_bank[5] - 1;
             char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
             char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111);
-            ram[get_index(ptr_stk_index, ptr_sym_index)] = reg_bank[reg];
+            char ptr_sym_index = (ptr & 0b00011111);*/
+            ram[indirect(reg_bank, this_op.opr1, ram)] = reg_bank[reg];
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b00) {
-            int curr_stk_index = reg_bank[5] - 1;
-            ram[get_index(curr_stk_index, this_op.opr1)] = this_op.opr2;
+            //int curr_stk_index = reg_bank[5] - 1;
+            ram[get_symbol_index(reg_bank, this_op.opr1)] = this_op.opr2;
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b00) {
-            int curr_stk_index = reg_bank[5] - 1;
+            /*int curr_stk_index = reg_bank[5] - 1;
             char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
             char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111);
-            ram[get_index(ptr_stk_index, ptr_sym_index)] = this_op.opr2;
+            char ptr_sym_index = (ptr & 0b00011111);*/
+            ram[indirect(reg_bank, this_op.opr1, ram)] = this_op.opr2;
         } else if (this_op.type1 == 0b01 && this_op.type2 == 0b10) {
-            int symbol = this_op.opr2;
+           /* int symbol = this_op.opr2;
             int stk_index = reg_bank[5] - 1;
-            int symbol_index = get_index(stk_index, symbol);
+            int symbol_index = get_index(stk_index, symbol); */
             int reg = this_op.opr1;
-            reg_bank[reg] = ram[symbol_index];
+            reg_bank[reg] = ram[get_symbol_index(reg_bank, this_op.opr2)];
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b11) {
-            int curr_stk_index = reg_bank[5] - 1;
+            /*int curr_stk_index = reg_bank[5] - 1;
             int dest_ptr = ram[get_index(curr_stk_index, this_op.opr1)];
             int src_ptr = ram[get_index(curr_stk_index, this_op.opr2)];
             int dest_ptr_stk_index = (dest_ptr >> 5) & 0b00000111;
             int dest_ptr_sym_index = (dest_ptr & 0b00011111);
             int src_ptr_stk_index = (src_ptr >> 5) & 0b00000111;
-            int src_ptr_sym_index = (src_ptr & 0b00011111);
-            ram[get_index(dest_ptr_stk_index, dest_ptr_sym_index)] =
-            ram[get_index(src_ptr_stk_index, src_ptr_sym_index)];
+            int src_ptr_sym_index = (src_ptr & 0b00011111); */
+            ram[indirect(reg_bank, this_op.opr1, ram)] =
+            ram[indirect(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b10) {
-            int curr_stk_index = reg_bank[5] - 1;
+            /*int curr_stk_index = reg_bank[5] - 1;
             char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
             char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111);
-            ram[get_index(ptr_stk_index, ptr_sym_index)] = 
-            ram[get_index(curr_stk_index, this_op.opr2)];
+            char ptr_sym_index = (ptr & 0b00011111);*/
+            ram[indirect(reg_bank, this_op.opr1, ram)] = 
+            ram[get_symbol_index(reg_bank, this_op.opr2)];
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b11) {
-            int curr_stk_index = reg_bank[5] - 1;
+            /*int curr_stk_index = reg_bank[5] - 1;
             char ptr = ram[get_index(curr_stk_index, this_op.opr2)];
             char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111);
-            ram[get_index(curr_stk_index, this_op.opr1)] = 
-            ram[get_index(ptr_stk_index, ptr_sym_index)];
+            char ptr_sym_index = (ptr & 0b00011111); */
+            ram[get_symbol_index(reg_bank, this_op.opr1)] = 
+            ram[indirect(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b10) {
-            int stk_index = reg_bank[5] - 1;
-            ram[get_index(stk_index, this_op.opr1)] = ram[get_index(stk_index, this_op.opr2)];
+            //int stk_index = reg_bank[5] - 1;
+            ram[get_symbol_index(reg_bank, this_op.opr1)] = ram[get_symbol_index(reg_bank, this_op.opr2)];
         } else if (this_op.type1 == 0b01 && this_op.type2 == 0b00) {
             int reg = this_op.opr1;
             reg_bank[reg] = this_op.opr2;
@@ -179,15 +193,15 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             reg_bank[reg] = address;
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b10) {
             char address = get_pointer(reg_bank, this_op.opr2);
-            int stk_index = reg_bank[5] - 1;
-            ram[get_index(stk_index, this_op.opr1)] = address;
+            //int stk_index = reg_bank[5] - 1;
+            ram[get_symbol_index(reg_bank, this_op.opr1)] = address;
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b10) {
             char address = get_pointer(reg_bank, this_op.opr2);
-            int curr_stk_index = reg_bank[5] - 1;
+            /*int curr_stk_index = reg_bank[5] - 1;
             char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
             char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111);
-            ram[get_index(ptr_stk_index, ptr_sym_index)] = address;
+            char ptr_sym_index = (ptr & 0b00011111);*/
+            ram[indirect(reg_bank,this_op.opr1, ram)] = address;
         } else {
             exit(1);
         }
@@ -208,15 +222,16 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             unsigned int content = reg_bank[reg];
             printf("%u\n", content);
         } else if (this_op.type1 == 0b10) {
-            int stk_index = reg_bank[5] - 1;
-            unsigned int content = ram[get_index(stk_index, this_op.opr1)];
+            //int stk_index = reg_bank[5] - 1;
+            unsigned int content = ram[get_symbol_index(reg_bank, this_op.opr1)];
             printf("%u\n", content);
         } else if (this_op.type1 == 0b11) {
+            /*
             int curr_stk_index = reg_bank[5] - 1;
             char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
             char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111);
-            unsigned int content = ram[get_index(ptr_stk_index, ptr_sym_index)];
+            char ptr_sym_index = (ptr & 0b00011111); */
+            unsigned int content = ram[indirect(reg_bank, this_op.opr1, ram)];
             printf("%u\n", content);
         } else {
             exit(1);
