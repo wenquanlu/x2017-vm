@@ -72,19 +72,13 @@ int parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size) 
     int in_func = 0;
     int func_pt = 0;
     int bit_count = 0;  
-    int func_length;
-    enum opera_type {
-        val, reg, stac, pt
-    };
-    enum opco_type {
-        mov, cal, ret, ref, add, print, not, equ
-    };
-    enum opera_type curr_type;
-    enum opco_type curr_opco_type;
+    int func_length = 0;
+    unsigned char curr_type = 0;
+    unsigned char curr_opco_type = 0;
     int symbol_pt = 0;
-    struct func * this_func;
+    struct func * this_func = NULL;
     struct operation * this_op;
-    struct operation * this_op_ls;
+    struct operation * this_op_ls = NULL;
     while (1) {
         int displacement = bit_count / 8 + 1;
         int inbyte_dis;
@@ -116,23 +110,7 @@ int parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size) 
             } else  {
                 this_op = (struct operation *) malloc(sizeof(struct operation));
                 unsigned char opcode = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
-                if (opcode == 0b000) {
-                    curr_opco_type = mov;
-                } else if (opcode == 0b001) {
-                    curr_opco_type = cal;
-                } else if (opcode == 0b010) {
-                    curr_opco_type = ret;
-                } else if (opcode == 0b011) {
-                    curr_opco_type = ref;
-                } else if (opcode == 0b100) {
-                    curr_opco_type = add;
-                } else if (opcode == 0b101) {
-                    curr_opco_type = print;
-                } else if (opcode == 0b110) {
-                    curr_opco_type = not;
-                } else if (opcode == 0b111) {
-                    curr_opco_type = equ;
-                }
+                curr_opco_type = opcode;
                 bit_count += 3;
                 stage = 2;
                 if (opcode == 0b010) {
@@ -147,27 +125,19 @@ int parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size) 
             }
         } else if (stage == 2) {
             unsigned char data_type = get_bits(inbyte_dis, displacement, 2, fp, &byte_buf);
-            if (data_type == 0b00) {
-                curr_type = val;
-            } else if (data_type == 0b01) {
-                curr_type = reg;
-            } else if (data_type == 0b10) {
-                curr_type = stac;
-            } else if (data_type == 0b11) {
-                curr_type = pt;
-            }
+            curr_type = data_type;
             this_op -> type1 = data_type;
             bit_count += 2;
             stage = 3;
         } else if (stage == 3) {
-            unsigned char data;
-            if (curr_type == val) {
+            unsigned char data  = 0;
+            if (curr_type == 0b00) {
                 data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf);
                 bit_count += 8;
-            } else if (curr_type == reg) {
+            } else if (curr_type == 0b01) {
                 data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
                 bit_count += 3;
-            } else if (curr_type == stac) {
+            } else if (curr_type == 0b10) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
                 int exist = 0;
                 for (int i = 0; i < symbol_pt; i++) {
@@ -185,7 +155,7 @@ int parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size) 
                 }
                 bit_count += 5;
               
-            } else if (curr_type == pt) {
+            } else if (curr_type == 0b11) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
@@ -199,8 +169,8 @@ int parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size) 
             } 
             stage = 4;
             this_op -> opr1 = data;
-            if (curr_opco_type == cal || curr_opco_type == print || 
-            curr_opco_type == not || curr_opco_type == equ) {
+            if (curr_opco_type == 0b001 || curr_opco_type == 0b101 || 
+            curr_opco_type == 0b110 || curr_opco_type == 0b111) {
                 stage = 1;
                 this_op_ls[func_length - func_pt] = *this_op;
                 free(this_op);
@@ -208,27 +178,19 @@ int parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size) 
 
         } else if (stage == 4) {
             unsigned char data_type = get_bits(inbyte_dis, displacement, 2, fp, &byte_buf);
-            if (data_type == 0b00) {
-                curr_type = val;
-            } else if (data_type == 0b01) {
-                curr_type = reg;
-            } else if (data_type == 0b10) {
-                curr_type = stac;
-            } else if (data_type == 0b11) {
-                curr_type = pt;
-            }
+            curr_type = data_type;
             this_op -> type2 = data_type;
             bit_count += 2;
             stage = 5;
         } else if (stage == 5) {
-            unsigned char data;
-            if (curr_type == val) {
+            unsigned char data = 0;
+            if (curr_type == 0b00) {
                 data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf);
                 bit_count += 8;
-            } else if (curr_type == reg) {
+            } else if (curr_type == 0b01) {
                 data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
                 bit_count += 3;
-            } else if (curr_type == stac) {
+            } else if (curr_type == 0b10) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
                 int exist = 0;
                 for (int i = 0; i < symbol_pt; i++) {
@@ -245,7 +207,7 @@ int parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size) 
                     symbol_pt ++;
                 }
                 bit_count += 5;
-            } else if (curr_type == pt) {
+            } else if (curr_type == 0b11) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
