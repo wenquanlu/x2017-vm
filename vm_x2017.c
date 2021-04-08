@@ -110,72 +110,36 @@ int indirect(unsigned char * reg_bank, char ptr_symbol, unsigned char * ram) {
 }
 
 void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_bank) {
-    //to be implemented
     if (this_op.opcode == 0b000) {
         if (this_op.type1 == 0b01 && this_op.type2 == 0b00) {
             int reg = this_op.opr1;
             reg_bank[reg] = this_op.opr2;
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b01) {
-            /*int symbol = this_op.opr1;
-            int stk_index = reg_bank[5] - 1;
-            int symbol_index = get_index(stk_index, symbol);*/
             int reg = this_op.opr2;
             ram[get_symbol_index(reg_bank, this_op.opr1)] = reg_bank[reg];
         } else if (this_op.type1 == 0b01 && this_op.type2 == 0b11) {
-            /*int curr_stk_index = reg_bank[5] - 1;
-            char ptr = ram[get_index(curr_stk_index, this_op.opr2)];
-            char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111);*/
             int reg = this_op.opr1;
             reg_bank[reg] = ram[indirect(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b01) {
             int reg = this_op.opr2;
-            /*int curr_stk_index = reg_bank[5] - 1;
-            char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
-            char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111);*/
             ram[indirect(reg_bank, this_op.opr1, ram)] = reg_bank[reg];
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b00) {
-            //int curr_stk_index = reg_bank[5] - 1;
             ram[get_symbol_index(reg_bank, this_op.opr1)] = this_op.opr2;
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b00) {
-            /*int curr_stk_index = reg_bank[5] - 1;
-            char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
-            char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111);*/
             ram[indirect(reg_bank, this_op.opr1, ram)] = this_op.opr2;
         } else if (this_op.type1 == 0b01 && this_op.type2 == 0b10) {
-           /* int symbol = this_op.opr2;
-            int stk_index = reg_bank[5] - 1;
-            int symbol_index = get_index(stk_index, symbol); */
             int reg = this_op.opr1;
             reg_bank[reg] = ram[get_symbol_index(reg_bank, this_op.opr2)];
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b11) {
-            /*int curr_stk_index = reg_bank[5] - 1;
-            int dest_ptr = ram[get_index(curr_stk_index, this_op.opr1)];
-            int src_ptr = ram[get_index(curr_stk_index, this_op.opr2)];
-            int dest_ptr_stk_index = (dest_ptr >> 5) & 0b00000111;
-            int dest_ptr_sym_index = (dest_ptr & 0b00011111);
-            int src_ptr_stk_index = (src_ptr >> 5) & 0b00000111;
-            int src_ptr_sym_index = (src_ptr & 0b00011111); */
             ram[indirect(reg_bank, this_op.opr1, ram)] =
             ram[indirect(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b10) {
-            /*int curr_stk_index = reg_bank[5] - 1;
-            char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
-            char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111);*/
             ram[indirect(reg_bank, this_op.opr1, ram)] = 
             ram[get_symbol_index(reg_bank, this_op.opr2)];
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b11) {
-            /*int curr_stk_index = reg_bank[5] - 1;
-            char ptr = ram[get_index(curr_stk_index, this_op.opr2)];
-            char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111); */
             ram[get_symbol_index(reg_bank, this_op.opr1)] = 
             ram[indirect(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b10) {
-            //int stk_index = reg_bank[5] - 1;
             ram[get_symbol_index(reg_bank, this_op.opr1)] = ram[get_symbol_index(reg_bank, this_op.opr2)];
         } else if (this_op.type1 == 0b01 && this_op.type2 == 0b00) {
             int reg = this_op.opr1;
@@ -193,14 +157,9 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             reg_bank[reg] = address;
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b10) {
             char address = get_pointer(reg_bank, this_op.opr2);
-            //int stk_index = reg_bank[5] - 1;
             ram[get_symbol_index(reg_bank, this_op.opr1)] = address;
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b10) {
             char address = get_pointer(reg_bank, this_op.opr2);
-            /*int curr_stk_index = reg_bank[5] - 1;
-            char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
-            char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111);*/
             ram[indirect(reg_bank,this_op.opr1, ram)] = address;
         } else {
             exit(1);
@@ -222,15 +181,9 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             unsigned int content = reg_bank[reg];
             printf("%u\n", content);
         } else if (this_op.type1 == 0b10) {
-            //int stk_index = reg_bank[5] - 1;
             unsigned int content = ram[get_symbol_index(reg_bank, this_op.opr1)];
             printf("%u\n", content);
         } else if (this_op.type1 == 0b11) {
-            /*
-            int curr_stk_index = reg_bank[5] - 1;
-            char ptr = ram[get_index(curr_stk_index, this_op.opr1)];
-            char ptr_stk_index = (ptr >> 5) & 0b00000111;
-            char ptr_sym_index = (ptr & 0b00011111); */
             unsigned int content = ram[indirect(reg_bank, this_op.opr1, ram)];
             printf("%u\n", content);
         } else {
@@ -249,23 +202,14 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
     }
 }
 
-int main(int argc, char **argv) {
 
-    FILE *fp = fopen(argv[1], "rb");
-    if (fp == NULL) {
-        exit(1);
-    }
-    int size = 0;
-    fseek(fp, 0, SEEK_END);
-    size = ftell(fp);
-    fseek(fp, -1, SEEK_END);
+void parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size) {
     unsigned char byte_buf;
     int stage = 1;
     int in_func = 0;
     int func_pt = 0;
     int bit_count = 0;  
     int func_length;
-    char symbol_ls[52];
     enum opera_type {
         val, reg, stac, pt
     };
@@ -275,7 +219,6 @@ int main(int argc, char **argv) {
     enum opera_type curr_type;
     enum opco_type curr_opco_type;
     int symbol_pt = 0;
-    struct func * func_ls = NULL;
     struct func * this_func;
     struct operation * this_op;
     struct operation * this_op_ls;
@@ -299,8 +242,8 @@ int main(int argc, char **argv) {
                 unsigned char func = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
                 this_func -> op_ls = this_op_ls;
                 this_func -> label = func;
-                this_func -> next = func_ls;
-                func_ls = this_func;
+                this_func -> next = *func_ls;
+                *func_ls = this_func;
                 bit_count += 3;
                 in_func = 0;
                 func_length = 0;
@@ -356,16 +299,20 @@ int main(int argc, char **argv) {
         } else if (stage == 3) {
             unsigned char data;
             if (curr_type == val) {
-                data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf); 
+                data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf);
                 bit_count += 8;
             } else if (curr_type == reg) {
-                data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); 
+                data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
                 bit_count += 3;
             } else if (curr_type == stac) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
                 int exist = 0;
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
+                        for (int j = i; j < symbol_pt - 1; j++) {
+                            symbol_ls[j] = symbol_ls[j+1];
+                        }
+                        symbol_ls[symbol_pt - 1] = data;
                         exist = 1;
                     }
                 }
@@ -376,7 +323,15 @@ int main(int argc, char **argv) {
                 bit_count += 5;
               
             } else if (curr_type == pt) {
-                data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf); 
+                data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
+                for (int i = 0; i < symbol_pt; i++) {
+                    if (data == symbol_ls[i]) {
+                        for (int j = i; j < symbol_pt - 1; j++) {
+                            symbol_ls[j] = symbol_ls[j+1];
+                        }
+                        symbol_ls[symbol_pt - 1] = data;
+                    }
+                }
                 bit_count += 5;
             } 
             stage = 4;
@@ -387,7 +342,7 @@ int main(int argc, char **argv) {
                 this_op_ls[func_length - func_pt] = *this_op;
                 free(this_op);
             }
-        
+
         } else if (stage == 4) {
             unsigned char data_type = get_bits(inbyte_dis, displacement, 2, fp, &byte_buf);
             if (data_type == 0b00) {
@@ -405,16 +360,20 @@ int main(int argc, char **argv) {
         } else if (stage == 5) {
             unsigned char data;
             if (curr_type == val) {
-                data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf); 
+                data = get_bits(inbyte_dis, displacement, 8, fp, &byte_buf);
                 bit_count += 8;
             } else if (curr_type == reg) {
-                data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf); 
+                data = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
                 bit_count += 3;
             } else if (curr_type == stac) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
                 int exist = 0;
                 for (int i = 0; i < symbol_pt; i++) {
                     if (data == symbol_ls[i]) {
+                        for (int j = i; j < symbol_pt - 1; j++) {
+                            symbol_ls[j] = symbol_ls[j+1];
+                        }
+                        symbol_ls[symbol_pt - 1] = data;
                         exist = 1;
                     }
                 }
@@ -425,6 +384,14 @@ int main(int argc, char **argv) {
                 bit_count += 5;
             } else if (curr_type == pt) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
+                for (int i = 0; i < symbol_pt; i++) {
+                    if (data == symbol_ls[i]) {
+                        for (int j = i; j < symbol_pt - 1; j++) {
+                            symbol_ls[j] = symbol_ls[j+1];
+                        }
+                        symbol_ls[symbol_pt - 1] = data;
+                    }
+                }
                 bit_count += 5;
             }
             stage = 1;
@@ -433,6 +400,20 @@ int main(int argc, char **argv) {
             free(this_op);
         }
     }
+}
+
+int main(int argc, char **argv) {
+    FILE *fp = fopen(argv[1], "rb");
+    if (fp == NULL) {
+        exit(1);
+    }
+    int size = 0;
+    fseek(fp, 0, SEEK_END);
+    size = ftell(fp);
+    fseek(fp, -1, SEEK_END);
+    char symbol_ls[52];
+    struct func * func_ls = NULL;
+    parse_binary(fp, &func_ls, symbol_ls, size);
 
     unsigned char ram[256] = {};
     unsigned char reg_bank[8] = {}; //reg_bank[5] stores the total size of stack frames
