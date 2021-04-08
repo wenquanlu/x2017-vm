@@ -121,7 +121,7 @@ int indirect(unsigned char * reg_bank, char ptr_symbol, unsigned char * ram) {
     return get_index(ptr_stk_index, ptr_sym_index);
 }
 
-void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_bank) {
+void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_bank, struct func * func_ls) {
     if (this_op.opcode == 0b000) {
         if (this_op.type1 == 0b01 && this_op.type2 == 0b00) {
             int reg = this_op.opr1;
@@ -174,6 +174,7 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             char address = get_pointer(reg_bank, this_op.opr2);
             ram[indirect(reg_bank,this_op.opr1, ram)] = address;
         } else {
+            free_all(func_ls);
             exit(1);
         }
     } else if (this_op.opcode == 0b100) {
@@ -182,6 +183,7 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             int reg2 = this_op.opr2;
             reg_bank[reg1] = reg_bank[reg1] + reg_bank[reg2];
         } else {
+            free_all(func_ls);
             exit(1);
         }
     } else if (this_op.opcode == 0b101) {
@@ -199,6 +201,7 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             unsigned int content = ram[indirect(reg_bank, this_op.opr1, ram)];
             printf("%u\n", content);
         } else {
+            free_all(func_ls);
             exit(1);
         }
     } else if (this_op.opcode == 0b110) {
@@ -414,7 +417,7 @@ int main(int argc, char **argv) {
             reg_bank[7] = ram[get_stk_pt_index(reg_bank[5] - 1)];
             continue;
         }
-        execute(this_op, ram, reg_bank);
+        execute(this_op, ram, reg_bank, func_ls);
     }
 
     struct func * fpt2 = func_ls;
