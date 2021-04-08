@@ -70,6 +70,7 @@ void check_entry(struct func * func_ls) {
         }
         pt = pt -> next;
     }
+    perror("No entry point\n");
     free_all(func_ls);
     exit(1);
 }
@@ -82,12 +83,14 @@ struct func * get_func(struct func * func_ls, char func_label) {
         }
         pt = pt -> next;
     }
+    perror("function being called not defined\n");
     free_all(func_ls);
     exit(1);
 }
 
 void push_stack(unsigned char * ram, unsigned char * reg_bank, unsigned char func_label, struct func * func_ls) {
     if (get_index(reg_bank[5], 33) > 255) {
+        perror("stack over flow\n");
         free_all(func_ls);
         exit(1);
     }
@@ -174,6 +177,7 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             char address = get_pointer(reg_bank, this_op.opr2);
             ram[indirect(reg_bank,this_op.opr1, ram)] = address;
         } else {
+            perror("invalid assembly format\n");
             free_all(func_ls);
             exit(1);
         }
@@ -183,6 +187,7 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             int reg2 = this_op.opr2;
             reg_bank[reg1] = reg_bank[reg1] + reg_bank[reg2];
         } else {
+            perror("invalid assembly format\n");
             free_all(func_ls);
             exit(1);
         }
@@ -201,6 +206,7 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             unsigned int content = ram[indirect(reg_bank, this_op.opr1, ram)];
             printf("%u\n", content);
         } else {
+            perror("invalid assembly format\n");
             free_all(func_ls);
             exit(1);
         }

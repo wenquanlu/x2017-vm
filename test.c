@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 int main() {
-    FILE * f = fopen("abc", "wb");
+    FILE * f = fopen("test1", "wb");
     if (f == NULL) {
         perror("Failed: ");
         return 1;
@@ -31,7 +31,7 @@ int main() {
     char a = 0b00010000;
     char i = 0b00001000;
     char o = 0b01000010; */
-
+    /*
     char x = 0b00000000;
     char y = 0b00000000;
     char z = 0b01000000;
@@ -44,7 +44,25 @@ int main() {
     char i = 0b10100100;
     char o = 0b00010000;
     char u = 0b00001000;
-    char v = 0b01000010;
+    char v = 0b01000010;*/
+    char x = 0b00100000;
+    char y = 0b01000001;
+    char z = 0b01000010;
+    char w = 0b01000000;
+    char l = 0b01100001;
+    char m = 0b01000010;
+    char k = 0b01100000;
+    char p = 0b10000001;
+    char a = 0b01000010;
+    char i = 0b10000000;
+    char o = 0b10100001;
+    char u = 0b01000010;
+    char v = 0b10101111;
+    char ff = 0b01100101;
+    char c = 0b01000010;
+    char nn = 0b00000000;
+    char mm = 0b00100001;
+    char kk = 0b01000010;
     fwrite(&x, sizeof(x), 1, f);
     fwrite(&y,sizeof(y), 1 , f);
     fwrite(&z, 1,1, f);
@@ -58,6 +76,11 @@ int main() {
     fwrite(&o, 1,1, f);
     fwrite(&u, 1,1, f);
     fwrite(&v, 1,1, f);
+    fwrite(&ff, 1, 1, f);
+    fwrite(&c, 1, 1, f);
+    fwrite(&nn, 1,1, f);
+    fwrite(&mm, 1, 1, f);
+    fwrite(&kk, 1, 1, f);
     //fwrite(&o, 1, 1, f);
     fflush(f);
     fclose(f);

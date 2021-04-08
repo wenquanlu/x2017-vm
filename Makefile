@@ -13,7 +13,20 @@ tests:
 	echo "tests"
 
 run_tests:
-	echo "run_tests"
+	for testcase in `ls tests/*`;\
+	do \
+	if [ $${testcase: -3} == ".in" ];\
+	then\
+			filename=$$(basename "$$testcase" .in);\
+			expectedfile=tests/$$filename.out;\
+			result=$$(./vm_x2017 $$testcase | diff - $$expectedfile);\
+			echo $$result;\
+			if [ "$$result" == "" ];\
+			then\
+			echo "$$filename passed";\
+			fi;\
+	fi;\
+	done;\
 
 clean:
 	echo "clean"
