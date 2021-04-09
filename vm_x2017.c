@@ -224,7 +224,7 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
 }
 
 
-void parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size) {
+void parse_binary(FILE * fp, struct func ** func_ls, int size) {
     unsigned char byte_buf;
     int stage = 1;
     int in_func = 0;
@@ -233,7 +233,6 @@ void parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size)
     int func_length = 0;
     unsigned char curr_type = 0;
     unsigned char curr_opco_type = 0;
-    int symbol_pt = 0;
     struct func * this_func = NULL;
     struct operation * this_op;
     struct operation * this_op_ls = NULL;
@@ -297,32 +296,10 @@ void parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size)
                 bit_count += 3;
             } else if (curr_type == 0b10) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
-                int exist = 0;
-                for (int i = 0; i < symbol_pt; i++) {
-                    if (data == symbol_ls[i]) {
-                        for (int j = i; j < symbol_pt - 1; j++) {
-                            symbol_ls[j] = symbol_ls[j+1];
-                        }
-                        symbol_ls[symbol_pt - 1] = data;
-                        exist = 1;
-                    }
-                }
-                if (!exist) {
-                    symbol_ls[symbol_pt] = data;
-                    symbol_pt ++;
-                }
                 bit_count += 5;
               
             } else if (curr_type == 0b11) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
-                for (int i = 0; i < symbol_pt; i++) {
-                    if (data == symbol_ls[i]) {
-                        for (int j = i; j < symbol_pt - 1; j++) {
-                            symbol_ls[j] = symbol_ls[j+1];
-                        }
-                        symbol_ls[symbol_pt - 1] = data;
-                    }
-                }
                 bit_count += 5;
             } 
             stage = 4;
@@ -350,31 +327,9 @@ void parse_binary(FILE * fp, struct func ** func_ls, char * symbol_ls, int size)
                 bit_count += 3;
             } else if (curr_type == 0b10) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
-                int exist = 0;
-                for (int i = 0; i < symbol_pt; i++) {
-                    if (data == symbol_ls[i]) {
-                        for (int j = i; j < symbol_pt - 1; j++) {
-                            symbol_ls[j] = symbol_ls[j+1];
-                        }
-                        symbol_ls[symbol_pt - 1] = data;
-                        exist = 1;
-                    }
-                }
-                if (!exist) {
-                    symbol_ls[symbol_pt] = data;
-                    symbol_pt ++;
-                }
                 bit_count += 5;
             } else if (curr_type == 0b11) {
                 data = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
-                for (int i = 0; i < symbol_pt; i++) {
-                    if (data == symbol_ls[i]) {
-                        for (int j = i; j < symbol_pt - 1; j++) {
-                            symbol_ls[j] = symbol_ls[j+1];
-                        }
-                        symbol_ls[symbol_pt - 1] = data;
-                    }
-                }
                 bit_count += 5;
             }
             stage = 1;
@@ -394,9 +349,8 @@ int main(int argc, char **argv) {
     fseek(fp, 0, SEEK_END);
     size = ftell(fp);
     fseek(fp, -1, SEEK_END);
-    char symbol_ls[52];
     struct func * func_ls = NULL;
-    parse_binary(fp, &func_ls, symbol_ls, size);
+    parse_binary(fp, &func_ls, size);
 
     unsigned char ram[256] = {};
     unsigned char reg_bank[8] = {}; //reg_bank[5] stores the total size of stack frames
