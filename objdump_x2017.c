@@ -226,6 +226,18 @@ void print_code(struct func * fpt) {
                 printf("\n");
             } else if (op.opcode == 0b011) {
                 printf("    REF");
+                if (op.type1 == 0b10) {
+                    int exist = 0;
+                    for (int i = 0; i < symbol_pt; i++) {
+                        if (op.opr1 == symbol_ls[i]) {
+                            exist = 1;
+                        }
+                    }
+                    if (!exist) {
+                        symbol_ls[symbol_pt] = op.opr1;
+                        symbol_pt++;
+                    }
+                }
                 print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
                 print_op(op.type2, op.opr2, symbol_ls, symbol_pt);
                 printf("\n");
