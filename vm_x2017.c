@@ -176,6 +176,15 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b10) {
             char address = get_pointer(reg_bank, this_op.opr2);
             ram[indirect(reg_bank,this_op.opr1, ram)] = address;
+        } else if (this_op.type1 == 0b01 && this_op.type2 == 0b11) {
+            int reg = this_op.opr1;
+            reg_bank[reg] = ram[get_symbol_index(reg_bank, this_op.opr2)];
+        } else if (this_op.type1 == 0b10 && this_op.type2 == 0b11) {
+            ram[get_symbol_index(reg_bank, this_op.opr1)] =
+            ram[get_symbol_index(reg_bank, this_op.opr2)];
+        } else if (this_op.type1 == 0b11 && this_op.type2 == 0b11) {
+            ram[indirect(reg_bank,this_op.opr1, ram)] = 
+            ram[get_symbol_index(reg_bank, this_op.opr2)];
         } else {
             fprintf(stderr, "invalid assembly format\n");
             free_all(func_ls);
