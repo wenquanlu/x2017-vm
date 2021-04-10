@@ -49,19 +49,31 @@ void print_op(unsigned char data_type, unsigned char data, char * symbol_ls, int
         printf(" REG %d", data);
     } else if (data_type == 0b10) {
         printf(" STK ");
+        int exist = 0;
         for (int i = 0; i < symbol_pt; i++) {
             if (symbol_ls[i] == data) {
                 printf("%c", get_symbol(i));
+                exist = 1;
                 break;
             }
         }
+        if (!exist) {
+            perror("PTR refered before init\n");
+            exit(1);
+        }
     } else if (data_type == 0b11) {
         printf(" PTR ");
+        int exist = 0;
         for (int i = 0; i < symbol_pt; i++) {
             if (symbol_ls[i] == data) {
                 printf("%c", get_symbol(i));
+                exist = 1;
                 break;
             }
+        }
+        if (!exist) {
+            perror("PTR refered before init\n");
+            exit(1);
         }
     }
 }
