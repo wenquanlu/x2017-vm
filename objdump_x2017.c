@@ -15,6 +15,15 @@ struct func {
     unsigned char len;
 };
 
+void free_all(struct func * fpt) {
+    while (fpt) {
+        struct func * next_pt = fpt -> next;
+        free(fpt -> op_ls);
+        free(fpt);
+        fpt = next_pt;
+    }
+}
+
 char get_bits(int bit_shift, int displacement, int length, FILE *fp, unsigned char * byte_buf) {
     if (bit_shift > 8 - length) {
         fseek(fp, -displacement, SEEK_END);
@@ -42,7 +51,7 @@ char get_symbol(int index) {
     }
 }
 
-void print_op(unsigned char data_type, unsigned char data, char * symbol_ls, int symbol_pt) {
+void print_op(unsigned char data_type, unsigned char data, char * symbol_ls, int symbol_pt, struct func * func_ls) {
     if (data_type == 0b00) {
         printf(" VAL %d", data);
     } else if (data_type == 0b01) {
@@ -58,7 +67,8 @@ void print_op(unsigned char data_type, unsigned char data, char * symbol_ls, int
             }
         }
         if (!exist) {
-            perror("PTR refered before init\n");
+            fprintf(stderr, "symbol refered before init\n");
+            free_all(func_ls);
             exit(1);
         }
     } else if (data_type == 0b11) {
@@ -72,7 +82,8 @@ void print_op(unsigned char data_type, unsigned char data, char * symbol_ls, int
             }
         }
         if (!exist) {
-            perror("PTR refered before init\n");
+            fprintf(stderr, "symbol refered before init\n");
+            free_all(func_ls);
             exit(1);
         }
     }
@@ -195,6 +206,7 @@ void parse_binary(FILE * fp, struct func ** func_ls, int size) {
 }
 
 void print_code(struct func * fpt) {
+    struct func * func_ls = fpt;
     while (fpt) {
         char symbol_ls[32];
         int symbol_pt = 0;
@@ -205,19 +217,19 @@ void print_code(struct func * fpt) {
                 printf("    RET\n");
             } else if (op.opcode == 0b001) {
                 printf("    CAL");
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt, func_ls);
                 printf("\n");
             } else if (op.opcode == 0b101) {
                 printf("    PRINT");
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt, func_ls);
                 printf("\n");
             } else if (op.opcode == 0b110) {
                 printf("    NOT");
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt, func_ls);
                 printf("\n");
             } else if (op.opcode == 0b111) {
                 printf("    EQU");
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt, func_ls);
                 printf("\n");
             } else if (op.opcode == 0b000) {
                 printf("    MOV");
@@ -233,8 +245,8 @@ void print_code(struct func * fpt) {
                         symbol_pt++;
                     }
                 }
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
-                print_op(op.type2, op.opr2, symbol_ls, symbol_pt);
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt, func_ls);
+                print_op(op.type2, op.opr2, symbol_ls, symbol_pt, func_ls);
                 printf("\n");
             } else if (op.opcode == 0b011) {
                 printf("    REF");
@@ -250,13 +262,13 @@ void print_code(struct func * fpt) {
                         symbol_pt++;
                     }
                 }
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
-                print_op(op.type2, op.opr2, symbol_ls, symbol_pt);
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt, func_ls);
+                print_op(op.type2, op.opr2, symbol_ls, symbol_pt, func_ls);
                 printf("\n");
             } else if (op.opcode == 0b100) {
                 printf("    ADD");
-                print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
-                print_op(op.type2, op.opr2, symbol_ls, symbol_pt);
+                print_op(op.type1, op.opr1, symbol_ls, symbol_pt, func_ls);
+                print_op(op.type2, op.opr2, symbol_ls, symbol_pt, func_ls);
                 printf("\n");
             }
         }
@@ -267,6 +279,7 @@ void print_code(struct func * fpt) {
 int main(int argc, char **argv) {
     FILE *fp = fopen(argv[1], "rb");
     if (fp == NULL) {
+        fprintf(stderr, "open file error\n");
         exit(1);
     }
     int size = 0;
@@ -278,10 +291,5 @@ int main(int argc, char **argv) {
     struct func * fpt = func_ls;
     print_code(fpt);
     struct func * fpt2 = func_ls;
-    while (fpt2) {
-        struct func * next_pt = fpt2 -> next;
-        free(fpt2 -> op_ls);
-        free(fpt2);
-        fpt2 = next_pt;
-    }
+    free_all(fpt2);
 }

@@ -70,7 +70,7 @@ void check_entry(struct func * func_ls) {
         }
         pt = pt -> next;
     }
-    perror("No entry point\n");
+    fprintf(stderr, "No entry point\n");
     free_all(func_ls);
     exit(1);
 }
@@ -83,14 +83,14 @@ struct func * get_func(struct func * func_ls, char func_label) {
         }
         pt = pt -> next;
     }
-    perror("function being called not defined\n");
+    fprintf(stderr, "function being called not defined\n");
     free_all(func_ls);
     exit(1);
 }
 
 void push_stack(unsigned char * ram, unsigned char * reg_bank, unsigned char func_label, struct func * func_ls) {
     if (get_index(reg_bank[5], 33) > 255) {
-        perror("stack over flow\n");
+        fprintf(stderr, "stack over flow\n");
         free_all(func_ls);
         exit(1);
     }
@@ -177,7 +177,7 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             char address = get_pointer(reg_bank, this_op.opr2);
             ram[indirect(reg_bank,this_op.opr1, ram)] = address;
         } else {
-            perror("invalid assembly format\n");
+            fprintf(stderr, "invalid assembly format\n");
             free_all(func_ls);
             exit(1);
         }
@@ -187,7 +187,7 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             int reg2 = this_op.opr2;
             reg_bank[reg1] = reg_bank[reg1] + reg_bank[reg2];
         } else {
-            perror("invalid assembly format\n");
+            fprintf(stderr, "invalid assembly format\n");
             free_all(func_ls);
             exit(1);
         }
@@ -206,7 +206,7 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             unsigned int content = ram[indirect(reg_bank, this_op.opr1, ram)];
             printf("%u\n", content);
         } else {
-            perror("invalid assembly format\n");
+            fprintf(stderr, "invalid assembly format\n");
             free_all(func_ls);
             exit(1);
         }
@@ -339,10 +339,70 @@ void parse_binary(FILE * fp, struct func ** func_ls, int size) {
         }
     }
 }
+void check_symbol_exist(struct func * func_ls, unsigned char data_type, 
+                        unsigned char data, char * symbol_ls, int symbol_pt) {
+    if (data_type == 0b10 || data_type == 0b11) {
+        int exist = 0;
+        for (int i = 0; i < symbol_pt; i++) {
+            if (symbol_ls[i] == data) {
+                exist = 1;
+                break;
+            }
+        }
+        if (!exist) {
+            fprintf(stderr, "symbol refered before init\n");
+            free_all(func_ls);
+            exit(1);
+        }
+    } 
+}
+void check_validity(struct func * fpt) {
+    struct func * func_ls = fpt;
+    while (fpt) {
+        char symbol_ls[32];
+        int symbol_pt = 0;
+        for (int i = 0; i < fpt -> len; i++) {
+            struct operation op = fpt -> op_ls[i];
+            if (op.opcode == 0b000) {
+                if (op.type1 == 0b10) {
+                    int exist = 0;
+                    for (int i = 0; i < symbol_pt; i++) {
+                        if (op.opr1 == symbol_ls[i]) {
+                            exist = 1;
+                        }
+                    }
+                    if (!exist) {
+                        symbol_ls[symbol_pt] = op.opr1;
+                        symbol_pt++;
+                    }
+                }
+                check_symbol_exist(func_ls, op.type1, op.opr1,symbol_ls, symbol_pt);
+                check_symbol_exist(func_ls, op.type2, op.opr2,symbol_ls, symbol_pt);
+            } else if (op.opcode == 0b011) {
+                if (op.type1 == 0b10) {
+                    int exist = 0;
+                    for (int i = 0; i < symbol_pt; i++) {
+                        if (op.opr1 == symbol_ls[i]) {
+                            exist = 1;
+                        }
+                    }
+                    if (!exist) {
+                        symbol_ls[symbol_pt] = op.opr1;
+                        symbol_pt++;
+                    }
+                }
+                check_symbol_exist(func_ls, op.type1, op.opr1,symbol_ls, symbol_pt);
+                check_symbol_exist(func_ls, op.type2, op.opr2,symbol_ls, symbol_pt);
+            }
+        }
+        fpt = fpt -> next;
+    }
+}
 
 int main(int argc, char **argv) {
     FILE *fp = fopen(argv[1], "rb");
     if (fp == NULL) {
+        fprintf(stderr, "open file error\n");
         exit(1);
     }
     int size = 0;
@@ -351,7 +411,7 @@ int main(int argc, char **argv) {
     fseek(fp, -1, SEEK_END);
     struct func * func_ls = NULL;
     parse_binary(fp, &func_ls, size);
-
+    check_validity(func_ls);
     unsigned char ram[256] = {};
     unsigned char reg_bank[8] = {}; //reg_bank[5] stores the total size of stack frames
     check_entry(func_ls);
