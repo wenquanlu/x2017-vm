@@ -163,6 +163,10 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             int reg_dest = this_op.opr1;
             int reg_src = this_op.opr2;
             reg_bank[reg_dest] = reg_bank[reg_src];
+        } else {
+            fprintf(stderr, "invalid assembly format\n");
+            free_all(func_ls);
+            exit(1);
         }
 
     } else if (this_op.opcode == 0b011) {
@@ -409,6 +413,10 @@ void check_validity(struct func * fpt) {
 }
 
 int main(int argc, char **argv) {
+    if (argc == 1) {
+        fprintf(stderr, "No argument\n");
+        exit(1);
+    }
     FILE *fp = fopen(argv[1], "rb");
     if (fp == NULL) {
         fprintf(stderr, "open file error\n");

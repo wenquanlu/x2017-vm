@@ -19,7 +19,7 @@ run_tests:
 	then\
 			filename=$$(basename "$$testcase" .in);\
 			expectedfile=tests/$$filename.out;\
-			result=$$(./vm_x2017 $$testcase | diff - $$expectedfile);\
+			result=$$(./vm_x2017 $$testcase 2>&1| diff - $$expectedfile);\
 			echo $$result;\
 			if [ "$$result" == "" ];\
 			then\
