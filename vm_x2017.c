@@ -383,13 +383,13 @@ void check_validity(struct func * fpt) {
                     int exist = 0;
                     for (int i = 0; i < symbol_pt; i++) {
                         if (op->opr1 == symbol_ls[i]) {
-                            op->opr1 = i;
+                            //op->opr1 = i;
                             exist = 1;
                         }
                     }
                     if (!exist) {
                         symbol_ls[symbol_pt] = op->opr1;
-                        op->opr1 = symbol_pt;
+                        //op->opr1 = symbol_pt;
                         symbol_pt++;
                     }
                 }
@@ -400,13 +400,13 @@ void check_validity(struct func * fpt) {
                     int exist = 0;
                     for (int i = 0; i < symbol_pt; i++) {
                         if (op->opr1 == symbol_ls[i]) {
-                            op->opr1 = i;
+                            //op->opr1 = i;
                             exist = 1;
                         }
                     }
                     if (!exist) {
                         symbol_ls[symbol_pt] = op->opr1;
-                        op->opr1 = symbol_pt;
+                        //op->opr1 = symbol_pt;
                         symbol_pt++;
                     }
                 }
