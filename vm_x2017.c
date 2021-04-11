@@ -359,7 +359,7 @@ void check_symbol_exist(struct func * func_ls, unsigned char data_type,
         int exist = 0;
         for (int i = 0; i < symbol_pt; i++) {
             if (symbol_ls[i] == *data) {
-                *data = symbol_ls[i];
+                *data = i;
                 exist = 1;
                 break;
             }
