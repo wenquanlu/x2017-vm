@@ -412,6 +412,8 @@ void check_validity(struct func * fpt) {
                 }
                 check_symbol_exist(func_ls, op->type1, &(op->opr1),symbol_ls, symbol_pt);
                 check_symbol_exist(func_ls, op->type2, &(op->opr2),symbol_ls, symbol_pt);
+            } else if (op-> opcode == 0b101) {
+                check_symbol_exist(func_ls, op->type1, &(op->opr1),symbol_ls, symbol_pt);
             }
         }
         fpt -> symbol_num = symbol_pt;
