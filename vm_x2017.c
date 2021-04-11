@@ -12,6 +12,7 @@ struct operation {
 struct func {
     unsigned char label;
     unsigned char len;
+    unsigned char symbol_num;
     struct operation * op_ls;
     struct func *next;
 };
@@ -353,11 +354,12 @@ void parse_binary(FILE * fp, struct func ** func_ls, int size) {
     }
 }
 void check_symbol_exist(struct func * func_ls, unsigned char data_type, 
-                        unsigned char data, char * symbol_ls, int symbol_pt) {
+                        unsigned char * data, char * symbol_ls, int symbol_pt) {
     if (data_type == 0b10 || data_type == 0b11) {
         int exist = 0;
         for (int i = 0; i < symbol_pt; i++) {
-            if (symbol_ls[i] == data) {
+            if (symbol_ls[i] == *data) {
+                *data = symbol_ls[i];
                 exist = 1;
                 break;
             }
@@ -375,39 +377,44 @@ void check_validity(struct func * fpt) {
         char symbol_ls[32];
         int symbol_pt = 0;
         for (int i = 0; i < fpt -> len; i++) {
-            struct operation op = fpt -> op_ls[i];
-            if (op.opcode == 0b000) {
-                if (op.type1 == 0b10) {
+            struct operation * op = &(fpt -> op_ls[i]);
+            if (op->opcode == 0b000) {
+                if (op->type1 == 0b10) {
                     int exist = 0;
                     for (int i = 0; i < symbol_pt; i++) {
-                        if (op.opr1 == symbol_ls[i]) {
+                        if (op->opr1 == symbol_ls[i]) {
+                            op->opr1 = i;
                             exist = 1;
                         }
                     }
                     if (!exist) {
-                        symbol_ls[symbol_pt] = op.opr1;
+                        symbol_ls[symbol_pt] = op->opr1;
+                        op->opr1 = symbol_pt;
                         symbol_pt++;
                     }
                 }
-                check_symbol_exist(func_ls, op.type1, op.opr1,symbol_ls, symbol_pt);
-                check_symbol_exist(func_ls, op.type2, op.opr2,symbol_ls, symbol_pt);
-            } else if (op.opcode == 0b011) {
-                if (op.type1 == 0b10) {
+                check_symbol_exist(func_ls, op->type1, &(op->opr1),symbol_ls, symbol_pt);
+                check_symbol_exist(func_ls, op->type2, &(op->opr2),symbol_ls, symbol_pt);
+            } else if (op->opcode == 0b011) {
+                if (op->type1 == 0b10) {
                     int exist = 0;
                     for (int i = 0; i < symbol_pt; i++) {
-                        if (op.opr1 == symbol_ls[i]) {
+                        if (op->opr1 == symbol_ls[i]) {
+                            op->opr1 = i;
                             exist = 1;
                         }
                     }
                     if (!exist) {
-                        symbol_ls[symbol_pt] = op.opr1;
+                        symbol_ls[symbol_pt] = op->opr1;
+                        op->opr1 = symbol_pt;
                         symbol_pt++;
                     }
                 }
-                check_symbol_exist(func_ls, op.type1, op.opr1,symbol_ls, symbol_pt);
-                check_symbol_exist(func_ls, op.type2, op.opr2,symbol_ls, symbol_pt);
+                check_symbol_exist(func_ls, op->type1, &(op->opr1),symbol_ls, symbol_pt);
+                check_symbol_exist(func_ls, op->type2, &(op->opr2),symbol_ls, symbol_pt);
             }
         }
+        fpt -> symbol_num = symbol_pt;
         fpt = fpt -> next;
     }
 }
