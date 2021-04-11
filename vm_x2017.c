@@ -45,24 +45,55 @@ char get_bits(int bit_shift, int displacement, int length, FILE *fp, unsigned ch
     }
 }
 
-int get_index(int stk_index, int symbol_index) {
-    return (stk_index) * 34 + 2 + symbol_index;
+int get_index(int stk_index, int symbol_index, unsigned char * ram) {
+    //unsigned char start_len = 0;
+    int index = 2;
+    int frame_index = 0;
+    while (frame_index < stk_index) {
+        unsigned char frame_len = ram[index];
+        index += (frame_len + 3);
+        frame_index++;
+    }
+    return index + symbol_index + 1;
 }
 
-int get_symbol_index(unsigned char * reg_bank, char symbol_index) {
+int get_symbol_index(unsigned char * reg_bank, char symbol_index, unsigned char * ram) {
     int stk_index = reg_bank[5] - 1;
-    int int_symbol_index = symbol_index;
-    return (stk_index) * 34 + 2 + int_symbol_index;
+    return get_index(stk_index, symbol_index, ram);
 }
 
-int get_stk_pt_index(int stk_index) {
-    return (stk_index) * 34 + 1;
+int get_stk_pt_index(int stk_index, unsigned char * ram) {
+    int index = 1;
+    int frame_index = 0;
+    while (frame_index < stk_index) {
+        unsigned char frame_len = ram[index + 1];
+        index += (frame_len + 3);
+        frame_index++;
+    } 
+    return index;
 }
 
-int get_stk_func_index(int stk_index) {
-    return (stk_index) * 34;
+int get_stk_func_index(int stk_index, unsigned char * ram) {
+    int index = 0;
+    int frame_index = 0;
+    while (frame_index < stk_index) {
+        unsigned char frame_len = ram[index + 2];
+        index += (frame_len + 3);
+        frame_index++;
+    }
+    return index;
 }
 
+int get_stk_len_index(int stk_index, unsigned char * ram) {
+    int index = 2;
+    int frame_index = 0;
+    while (frame_index < stk_index) {
+        unsigned char frame_len = ram[index];
+        index += (frame_len + 3);
+        frame_index++;
+    }
+    return index;
+}
 void check_entry(struct func * func_ls) {
     struct func * pt = func_ls;
     while (pt) {
@@ -90,13 +121,14 @@ struct func * get_func(struct func * func_ls, char func_label) {
 }
 
 void push_stack(unsigned char * ram, unsigned char * reg_bank, unsigned char func_label, struct func * func_ls) {
-    if (get_index(reg_bank[5], 33) > 255) {
+    if (get_index(reg_bank[5],(get_func(func_ls, func_label)) -> symbol_num - 1, ram) > 255) {
         fprintf(stderr, "stack over flow\n");
         free_all(func_ls);
         exit(1);
     }
-    ram[get_stk_func_index(reg_bank[5])] = func_label;
-    ram[get_stk_pt_index(reg_bank[5])] = 0;
+    ram[get_stk_func_index(reg_bank[5], ram)] = func_label;
+    ram[get_stk_pt_index(reg_bank[5], ram)] = 0;
+    ram[get_stk_len_index(reg_bank[5], ram)] = get_func(func_ls, func_label) -> symbol_num;
     reg_bank[5] ++;
 }
 
@@ -119,10 +151,10 @@ char get_pointer(unsigned char * reg_bank, char symbol) {
 
 int indirect(unsigned char * reg_bank, char ptr_symbol, unsigned char * ram) {
     //int curr_stk_index = reg_bank[5] - 1;
-    char ptr = ram[get_symbol_index(reg_bank, ptr_symbol)];
+    char ptr = ram[get_symbol_index(reg_bank, ptr_symbol, ram)];
     char ptr_stk_index = (ptr >> 5) & 0b00000111;
     char ptr_sym_index = (ptr & 0b00011111);
-    return get_index(ptr_stk_index, ptr_sym_index);
+    return get_index(ptr_stk_index, ptr_sym_index, ram);
 }
 
 void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_bank, struct func * func_ls) {
@@ -132,7 +164,7 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             reg_bank[reg] = this_op.opr2;
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b01) {
             int reg = this_op.opr2;
-            ram[get_symbol_index(reg_bank, this_op.opr1)] = reg_bank[reg];
+            ram[get_symbol_index(reg_bank, this_op.opr1, ram)] = reg_bank[reg];
         } else if (this_op.type1 == 0b01 && this_op.type2 == 0b11) {
             int reg = this_op.opr1;
             reg_bank[reg] = ram[indirect(reg_bank, this_op.opr2, ram)];
@@ -140,23 +172,23 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             int reg = this_op.opr2;
             ram[indirect(reg_bank, this_op.opr1, ram)] = reg_bank[reg];
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b00) {
-            ram[get_symbol_index(reg_bank, this_op.opr1)] = this_op.opr2;
+            ram[get_symbol_index(reg_bank, this_op.opr1, ram)] = this_op.opr2;
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b00) {
             ram[indirect(reg_bank, this_op.opr1, ram)] = this_op.opr2;
         } else if (this_op.type1 == 0b01 && this_op.type2 == 0b10) {
             int reg = this_op.opr1;
-            reg_bank[reg] = ram[get_symbol_index(reg_bank, this_op.opr2)];
+            reg_bank[reg] = ram[get_symbol_index(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b11) {
             ram[indirect(reg_bank, this_op.opr1, ram)] =
             ram[indirect(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b10) {
             ram[indirect(reg_bank, this_op.opr1, ram)] = 
-            ram[get_symbol_index(reg_bank, this_op.opr2)];
+            ram[get_symbol_index(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b11) {
-            ram[get_symbol_index(reg_bank, this_op.opr1)] = 
+            ram[get_symbol_index(reg_bank, this_op.opr1, ram)] = 
             ram[indirect(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b10) {
-            ram[get_symbol_index(reg_bank, this_op.opr1)] = ram[get_symbol_index(reg_bank, this_op.opr2)];
+            ram[get_symbol_index(reg_bank, this_op.opr1, ram)] = ram[get_symbol_index(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b01 && this_op.type2 == 0b00) {
             int reg = this_op.opr1;
             reg_bank[reg] = this_op.opr2;
@@ -177,19 +209,19 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             reg_bank[reg] = address;
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b10) {
             char address = get_pointer(reg_bank, this_op.opr2);
-            ram[get_symbol_index(reg_bank, this_op.opr1)] = address;
+            ram[get_symbol_index(reg_bank, this_op.opr1, ram)] = address;
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b10) {
             char address = get_pointer(reg_bank, this_op.opr2);
             ram[indirect(reg_bank,this_op.opr1, ram)] = address;
         } else if (this_op.type1 == 0b01 && this_op.type2 == 0b11) {
             int reg = this_op.opr1;
-            reg_bank[reg] = ram[get_symbol_index(reg_bank, this_op.opr2)];
+            reg_bank[reg] = ram[get_symbol_index(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b11) {
-            ram[get_symbol_index(reg_bank, this_op.opr1)] =
-            ram[get_symbol_index(reg_bank, this_op.opr2)];
+            ram[get_symbol_index(reg_bank, this_op.opr1, ram)] =
+            ram[get_symbol_index(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b11 && this_op.type2 == 0b11) {
             ram[indirect(reg_bank,this_op.opr1, ram)] = 
-            ram[get_symbol_index(reg_bank, this_op.opr2)];
+            ram[get_symbol_index(reg_bank, this_op.opr2, ram)];
         } else {
             fprintf(stderr, "invalid assembly format\n");
             free_all(func_ls);
@@ -214,7 +246,7 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             unsigned int content = reg_bank[reg];
             printf("%u\n", content);
         } else if (this_op.type1 == 0b10) {
-            unsigned int content = ram[get_symbol_index(reg_bank, this_op.opr1)];
+            unsigned int content = ram[get_symbol_index(reg_bank, this_op.opr1, ram)];
             printf("%u\n", content);
         } else if (this_op.type1 == 0b11) {
             unsigned int content = ram[indirect(reg_bank, this_op.opr1, ram)];
@@ -446,8 +478,8 @@ int main(int argc, char **argv) {
         int stk_index = reg_bank[5] - 1;
         int pc = reg_bank[7];
         struct operation this_op 
-        = get_func(func_ls, ram[get_stk_func_index(stk_index)]) -> op_ls[pc];
-        ram[get_stk_pt_index(stk_index)] ++;
+        = get_func(func_ls, ram[get_stk_func_index(stk_index, ram)]) -> op_ls[pc];
+        ram[get_stk_pt_index(stk_index, ram)] ++;
         reg_bank[7] ++;
         if (is_cal(this_op)) {          
             push_stack(ram, reg_bank, get_func_label(this_op), func_ls);
@@ -460,7 +492,7 @@ int main(int argc, char **argv) {
             if (reg_bank[5] == 0) {
                 break;
             }
-            reg_bank[7] = ram[get_stk_pt_index(reg_bank[5] - 1)];
+            reg_bank[7] = ram[get_stk_pt_index(reg_bank[5] - 1, ram)];
             continue;
         }
         execute(this_op, ram, reg_bank, func_ls);
