@@ -272,5 +272,4 @@ int main(int argc, char **argv) {
         free(fpt2);
         fpt2 = next_pt;
     }
-    printf("hello!\n");
 }
