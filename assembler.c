@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-void universal_write_func(FILE * fw, char x, int bit_num, int * bit_ptr, char * atm) {
+void universal_write_func(FILE * fw, unsigned char x, int bit_num, int * bit_ptr, char * atm) {
     int multiple = *bit_ptr / 8;
     int remainder = *bit_ptr % 8;
     if (remainder == 0) {
@@ -160,7 +160,6 @@ int main(int argc, char ** argv) {
     int padding = total_bits - bit_count;
     fseek(f, 0, SEEK_SET);
     FILE * fw = fopen(argv[2], "wb");
-    
     int bit_ptr = 0;
     char pad = 0b0;
     if (padding != 0) {
@@ -181,7 +180,7 @@ int main(int argc, char ** argv) {
         if (!strcmp(kot1, func)) {
             kot2 = strtok(NULL, " ");
             kot3 = strtok(NULL, " ");
-            char content = atoi(kot3);
+            unsigned char content = atoi(kot3);
             universal_write_func(fw,content, 3, &bit_ptr, &atm);
             func_count = 0;
         } else if (!strcmp(kot1, ret)) {

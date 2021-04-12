@@ -10,24 +10,22 @@ objdump_x2017:
 	$(CC) $(CFLAGS) objdump_x2017.c -o $@
 
 tests:
-	echo "tests"
-
-run_tests:
+	$(CC) $(CFLAGS) assembler.c -o assembler;\
 	for testcase in `ls tests/*`;\
 	do \
-	if [ $${testcase: -3} == ".in" ];\
+	if [ $${testcase: -4} == ".asm" ];\
 	then\
-			filename=$$(basename "$$testcase" .in);\
-			expectedfile=tests/$$filename.out;\
-			result=$$(./vm_x2017 $$testcase 2>&1| diff - $$expectedfile);\
-			echo $$result;\
-			if [ "$$result" == "" ];\
-			then\
-			echo "$$filename passed";\
-			fi;\
+			filename=$$(basename "$$testcase" .asm);\
+			assembledfile=tests/$$filename.in;\
+			./assembler $$testcase $$assembledfile;\
 	fi;\
 	done;\
 
+run_tests:
+	bash test.sh
+
 clean:
-	echo "clean"
+	rm vm_x2017;\
+	rm objdump_x2017;\
+	rm assembler
 
