@@ -1,22 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "vm.h"
-/*
-struct operation {
-        unsigned char opcode;
-        unsigned char type1;
-        unsigned char opr1;
-        unsigned char type2;
-        unsigned char opr2;
-};
-
-struct func {
-    unsigned char label;
-    unsigned char len;
-    unsigned char symbol_num;
-    struct operation * op_ls;
-    struct func *next;
-}; */
 
 void free_all(struct func * fpt) {
     while (fpt) {
@@ -28,7 +12,6 @@ void free_all(struct func * fpt) {
 }
 
 int get_index(int stk_index, int symbol_index, unsigned char * ram) {
-    //unsigned char start_len = 0;
     int index = 2;
     int frame_index = 0;
     while (frame_index < stk_index) {
@@ -39,7 +22,8 @@ int get_index(int stk_index, int symbol_index, unsigned char * ram) {
     return index + symbol_index + 1;
 }
 
-int get_symbol_index(unsigned char * reg_bank, char symbol_index, unsigned char * ram) {
+int get_symbol_index(unsigned char * reg_bank, char symbol_index, 
+                     unsigned char * ram) {
     int stk_index = reg_bank[5] - 1;
     return get_index(stk_index, symbol_index, ram);
 }
@@ -76,6 +60,7 @@ int get_stk_len_index(int stk_index, unsigned char * ram) {
     }
     return index;
 }
+
 void check_entry(struct func * func_ls) {
     struct func * pt = func_ls;
     while (pt) {
@@ -102,15 +87,18 @@ struct func * get_func(struct func * func_ls, char func_label) {
     exit(1);
 }
 
-void push_stack(unsigned char * ram, unsigned char * reg_bank, unsigned char func_label, struct func * func_ls) {
-    if (get_index(reg_bank[5],(get_func(func_ls, func_label)) -> symbol_num - 1, ram) > 255) {
+void push_stack(unsigned char * ram, unsigned char * reg_bank, 
+                unsigned char func_label, struct func * func_ls) {
+    if (get_index(reg_bank[5],
+        (get_func(func_ls, func_label)) -> symbol_num - 1, ram) > 255) {
         fprintf(stderr, "stack over flow\n");
         free_all(func_ls);
         exit(1);
     }
     ram[get_stk_func_index(reg_bank[5], ram)] = func_label;
     ram[get_stk_pt_index(reg_bank[5], ram)] = 0;
-    ram[get_stk_len_index(reg_bank[5], ram)] = get_func(func_ls, func_label) -> symbol_num;
+    ram[get_stk_len_index(reg_bank[5], ram)] = 
+    get_func(func_ls, func_label) -> symbol_num;
     reg_bank[5] ++;
 }
 
@@ -120,14 +108,14 @@ char get_pointer(unsigned char * reg_bank, char symbol) {
 }
 
 int indirect(unsigned char * reg_bank, char ptr_symbol, unsigned char * ram) {
-    //int curr_stk_index = reg_bank[5] - 1;
     char ptr = ram[get_symbol_index(reg_bank, ptr_symbol, ram)];
     char ptr_stk_index = (ptr >> 5) & 0b00000111;
     char ptr_sym_index = (ptr & 0b00011111);
     return get_index(ptr_stk_index, ptr_sym_index, ram);
 }
 
-void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_bank, struct func * func_ls) {
+void execute(struct operation this_op, unsigned char * ram, 
+             unsigned char * reg_bank, struct func * func_ls) {
     if (this_op.opcode == 0b000) {
         if (this_op.type1 == 0b01 && this_op.type2 == 0b00) {
             int reg = this_op.opr1;
@@ -158,7 +146,8 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             ram[get_symbol_index(reg_bank, this_op.opr1, ram)] = 
             ram[indirect(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b10 && this_op.type2 == 0b10) {
-            ram[get_symbol_index(reg_bank, this_op.opr1, ram)] = ram[get_symbol_index(reg_bank, this_op.opr2, ram)];
+            ram[get_symbol_index(reg_bank, this_op.opr1, ram)] = 
+            ram[get_symbol_index(reg_bank, this_op.opr2, ram)];
         } else if (this_op.type1 == 0b01 && this_op.type2 == 0b00) {
             int reg = this_op.opr1;
             reg_bank[reg] = this_op.opr2;
@@ -216,7 +205,8 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
             unsigned int content = reg_bank[reg];
             printf("%u\n", content);
         } else if (this_op.type1 == 0b10) {
-            unsigned int content = ram[get_symbol_index(reg_bank, this_op.opr1, ram)];
+            unsigned int content = 
+            ram[get_symbol_index(reg_bank, this_op.opr1, ram)];
             printf("%u\n", content);
         } else if (this_op.type1 == 0b11) {
             unsigned int content = ram[indirect(reg_bank, this_op.opr1, ram)];
@@ -239,7 +229,7 @@ void execute(struct operation this_op, unsigned char * ram, unsigned char * reg_
     }
 }
 
-void check_symbol_exist(struct func * func_ls, unsigned char data_type, 
+void check_update_symbol(struct func * func_ls, unsigned char data_type, 
                         unsigned char * data, char * symbol_ls, int symbol_pt) {
     if (data_type == 0b10 || data_type == 0b11) {
         int exist = 0;
@@ -257,7 +247,8 @@ void check_symbol_exist(struct func * func_ls, unsigned char data_type,
         }
     } 
 }
-void check_validity(struct func * fpt) {
+
+void check_update(struct func * fpt) {
     struct func * func_ls = fpt;
     while (fpt) {
         char symbol_ls[32];
@@ -269,37 +260,38 @@ void check_validity(struct func * fpt) {
                     int exist = 0;
                     for (int i = 0; i < symbol_pt; i++) {
                         if (op->opr1 == symbol_ls[i]) {
-                            //op->opr1 = i;
                             exist = 1;
                         }
                     }
                     if (!exist) {
                         symbol_ls[symbol_pt] = op->opr1;
-                        //op->opr1 = symbol_pt;
                         symbol_pt++;
                     }
                 }
-                check_symbol_exist(func_ls, op->type1, &(op->opr1),symbol_ls, symbol_pt);
-                check_symbol_exist(func_ls, op->type2, &(op->opr2),symbol_ls, symbol_pt);
+                check_update_symbol(func_ls, op->type1, 
+                                   &(op->opr1),symbol_ls, symbol_pt);
+                check_update_symbol(func_ls, op->type2, 
+                                   &(op->opr2),symbol_ls, symbol_pt);
             } else if (op->opcode == 0b011) {
                 if (op->type1 == 0b10) {
                     int exist = 0;
                     for (int i = 0; i < symbol_pt; i++) {
                         if (op->opr1 == symbol_ls[i]) {
-                            //op->opr1 = i;
                             exist = 1;
                         }
                     }
                     if (!exist) {
                         symbol_ls[symbol_pt] = op->opr1;
-                        //op->opr1 = symbol_pt;
                         symbol_pt++;
                     }
                 }
-                check_symbol_exist(func_ls, op->type1, &(op->opr1),symbol_ls, symbol_pt);
-                check_symbol_exist(func_ls, op->type2, &(op->opr2),symbol_ls, symbol_pt);
+                check_update_symbol(func_ls, op->type1, 
+                                   &(op->opr1),symbol_ls, symbol_pt);
+                check_update_symbol(func_ls, op->type2, 
+                                   &(op->opr2),symbol_ls, symbol_pt);
             } else if (op-> opcode == 0b101) {
-                check_symbol_exist(func_ls, op->type1, &(op->opr1),symbol_ls, symbol_pt);
+                check_update_symbol(func_ls, op->type1, 
+                                   &(op->opr1),symbol_ls, symbol_pt);
             }
         }
         fpt -> symbol_num = symbol_pt;
@@ -323,7 +315,7 @@ int main(int argc, char **argv) {
     fseek(fp, -1, SEEK_END);
     struct func * func_ls = NULL;
     parse_binary(fp, &func_ls, size);
-    check_validity(func_ls);
+    check_update(func_ls);
     unsigned char ram[256] = {};
     unsigned char reg_bank[8] = {}; //reg_bank[5] stores the total size of stack frames
     check_entry(func_ls);
@@ -351,7 +343,5 @@ int main(int argc, char **argv) {
         }
         execute(this_op, ram, reg_bank, func_ls);
     }
-
-    struct func * fpt2 = func_ls;
-    free_all(fpt2);
+    free_all(func_ls);
 }

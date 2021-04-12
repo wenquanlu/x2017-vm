@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "vm.h"
+#define TRUE 1
+#define FALSE 0
 
-char get_bits(int bit_shift, int displacement, int length, FILE *fp, unsigned char * byte_buf) {
+char get_bits(int bit_shift, int displacement, int length, 
+              FILE *fp, unsigned char * byte_buf) {
     if (bit_shift > 8 - length) {
         fseek(fp, -displacement, SEEK_END);
         fread(byte_buf, sizeof(*byte_buf), 1, fp);
@@ -21,11 +24,10 @@ char get_bits(int bit_shift, int displacement, int length, FILE *fp, unsigned ch
     }
 }
 
-
 void parse_binary(FILE * fp, struct func ** func_ls, int size) {
     unsigned char byte_buf;
     int stage = 1;
-    int in_func = 0;
+    int in_func = FALSE;
     int func_pt = 0;
     int bit_count = 0;  
     int func_length = 0;
@@ -44,27 +46,31 @@ void parse_binary(FILE * fp, struct func ** func_ls, int size) {
                     break;
                 }
                 this_func = (struct func *) malloc(sizeof(struct func));
-                func_length = get_bits(inbyte_dis, displacement, 5, fp, &byte_buf);
-                this_op_ls = (struct operation *) malloc(sizeof(struct operation) * func_length);
+                func_length = get_bits(inbyte_dis, displacement, 
+                                       5, fp, &byte_buf);
+                this_op_ls = 
+                (struct operation *) malloc(sizeof(struct operation) * func_length);
                 this_func -> len = func_length;
-                in_func = 1;
+                in_func = TRUE;
                 bit_count += 5;
                 stage = 1;
             }else if (func_length == func_pt) {
-                unsigned char func = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
+                unsigned char func = get_bits(inbyte_dis, displacement, 
+                                              3, fp, &byte_buf);
                 this_func -> op_ls = this_op_ls;
                 this_func -> label = func;
                 this_func -> next = *func_ls;
                 *func_ls = this_func;
                 bit_count += 3;
-                in_func = 0;
+                in_func = FALSE;
                 func_length = 0;
                 func_pt = 0;
                 stage = 1;  
 
             } else  {
                 this_op = (struct operation *) malloc(sizeof(struct operation));
-                unsigned char opcode = get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
+                unsigned char opcode = 
+                get_bits(inbyte_dis, displacement, 3, fp, &byte_buf);
                 curr_opco_type = opcode;
                 bit_count += 3;
                 stage = 2;
@@ -79,7 +85,8 @@ void parse_binary(FILE * fp, struct func ** func_ls, int size) {
                 func_pt ++;
             }
         } else if (stage == 2) {
-            unsigned char data_type = get_bits(inbyte_dis, displacement, 2, fp, &byte_buf);
+            unsigned char data_type = get_bits(inbyte_dis, displacement, 
+                                               2, fp, &byte_buf);
             curr_type = data_type;
             this_op -> type1 = data_type;
             bit_count += 2;
@@ -110,7 +117,8 @@ void parse_binary(FILE * fp, struct func ** func_ls, int size) {
             }
 
         } else if (stage == 4) {
-            unsigned char data_type = get_bits(inbyte_dis, displacement, 2, fp, &byte_buf);
+            unsigned char data_type = get_bits(inbyte_dis, displacement, 
+                                               2, fp, &byte_buf);
             curr_type = data_type;
             this_op -> type2 = data_type;
             bit_count += 2;

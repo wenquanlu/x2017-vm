@@ -10,7 +10,8 @@ char get_symbol(int index) {
     }
 }
 
-void print_op(unsigned char data_type, unsigned char data, char * symbol_ls, int symbol_pt) {
+void print_op(unsigned char data_type, unsigned char data, 
+              char * symbol_ls, int symbol_pt) {
     if (data_type == 0b00) {
         printf(" VAL %d", data);
     } else if (data_type == 0b01) {
