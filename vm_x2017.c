@@ -281,6 +281,7 @@ void check_update(struct func * fpt) {
         for (int i = 0; i < fpt -> len; i++) {
             struct operation * op = &(fpt -> op_ls[i]);
             if (op->opcode == 0b000) {
+                // symbol can be initialised by MOV
                 if (op->type1 == 0b10) {
                     int exist = 0;
                     for (int i = 0; i < symbol_pt; i++) {
@@ -298,6 +299,7 @@ void check_update(struct func * fpt) {
                 check_update_symbol(func_ls, op->type2, 
                                    &(op->opr2),symbol_ls, symbol_pt);
             } else if (op->opcode == 0b011) {
+                // symbol can be initialised by REF
                 if (op->type1 == 0b10) {
                     int exist = 0;
                     for (int i = 0; i < symbol_pt; i++) {

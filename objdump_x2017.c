@@ -66,6 +66,7 @@ void print_code(struct func * fpt) {
                 print_op(op.type1, op.opr1, symbol_ls, symbol_pt);
                 printf("\n");
             } else if (op.opcode == 0b000) {
+                // symbol can be initialised by MOV
                 printf("    MOV");
                 if (op.type1 == 0b10) {
                     int exist = 0;
@@ -83,6 +84,7 @@ void print_code(struct func * fpt) {
                 print_op(op.type2, op.opr2, symbol_ls, symbol_pt);
                 printf("\n");
             } else if (op.opcode == 0b011) {
+                // symbol can be initialised by REF
                 printf("    REF");
                 if (op.type1 == 0b10) {
                     int exist = 0;
