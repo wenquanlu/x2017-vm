@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include "vm.h"
 
+// get symbol by its occurence index
+// first appear symbol has index 0, so symbol 'A'
 char get_symbol(int index) {
     if (index <= 25) {
         return 'A' + index;
@@ -10,6 +12,7 @@ char get_symbol(int index) {
     }
 }
 
+// print a type-value tuple of the operation
 void print_op(unsigned char data_type, unsigned char data, 
               char * symbol_ls, int symbol_pt) {
     if (data_type == 0b00) {
@@ -35,6 +38,8 @@ void print_op(unsigned char data_type, unsigned char data,
     }
 }
 
+// receive a pointer to a linked list of struct func
+// print the x2017 assembly code 
 void print_code(struct func * fpt) {
     while (fpt) {
         char symbol_ls[32];

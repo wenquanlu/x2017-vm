@@ -1,7 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "vm.h"
+#define PROGRAM_COUNTER 7
+#define NUM_STK_COUNTER 5
 
+// free all the malloc memory: the list of functions
 void free_all(struct func * fpt) {
     while (fpt) {
         struct func * next_pt = fpt -> next;
@@ -11,6 +14,7 @@ void free_all(struct func * fpt) {
     }
 }
 
+// get index of a symbol within a specific stack frame in ram[256]
 int get_index(int stk_index, int symbol_index, unsigned char * ram) {
     int index = 2;
     int frame_index = 0;
@@ -22,12 +26,16 @@ int get_index(int stk_index, int symbol_index, unsigned char * ram) {
     return index + symbol_index + 1;
 }
 
+// get index of a symbol in the current stack frame in ram[256]
 int get_symbol_index(unsigned char * reg_bank, char symbol_index, 
                      unsigned char * ram) {
-    int stk_index = reg_bank[5] - 1;
+    int stk_index = reg_bank[NUM_STK_COUNTER] - 1;
     return get_index(stk_index, symbol_index, ram);
 }
 
+// get stack pointer index of a specific stack frame
+// stack pointer will register the return address to this stack
+// frame when calling function from this stack frame.
 int get_stk_pt_index(int stk_index, unsigned char * ram) {
     int index = 1;
     int frame_index = 0;
@@ -39,6 +47,7 @@ int get_stk_pt_index(int stk_index, unsigned char * ram) {
     return index;
 }
 
+// get the index of function label of a specfic stack frame
 int get_stk_func_index(int stk_index, unsigned char * ram) {
     int index = 0;
     int frame_index = 0;
@@ -50,6 +59,8 @@ int get_stk_func_index(int stk_index, unsigned char * ram) {
     return index;
 }
 
+// get index of an element storing the length of a specific 
+// stack frame in ram[256].
 int get_stk_len_index(int stk_index, unsigned char * ram) {
     int index = 2;
     int frame_index = 0;
@@ -61,6 +72,7 @@ int get_stk_len_index(int stk_index, unsigned char * ram) {
     return index;
 }
 
+// check if the entry point of the program exists
 void check_entry(struct func * func_ls) {
     struct func * pt = func_ls;
     while (pt) {
@@ -74,6 +86,8 @@ void check_entry(struct func * func_ls) {
     exit(1);
 }
 
+// get pointer to a function with a specific function label 
+// from program memory.
 struct func * get_func(struct func * func_ls, char func_label) {
     struct func * pt = func_ls;
     while (pt) {
@@ -87,26 +101,33 @@ struct func * get_func(struct func * func_ls, char func_label) {
     exit(1);
 }
 
+// push a stack frame to ram[256]
 void push_stack(unsigned char * ram, unsigned char * reg_bank, 
                 unsigned char func_label, struct func * func_ls) {
-    if (get_index(reg_bank[5],
+    if (get_index(reg_bank[NUM_STK_COUNTER],
         (get_func(func_ls, func_label)) -> symbol_num - 1, ram) > 255) {
         fprintf(stderr, "Stack over flow\n");
         free_all(func_ls);
         exit(1);
     }
-    ram[get_stk_func_index(reg_bank[5], ram)] = func_label;
-    ram[get_stk_pt_index(reg_bank[5], ram)] = 0;
-    ram[get_stk_len_index(reg_bank[5], ram)] = 
+    ram[get_stk_func_index(reg_bank[NUM_STK_COUNTER], ram)] = func_label;
+    ram[get_stk_pt_index(reg_bank[NUM_STK_COUNTER], ram)] = 0;
+    ram[get_stk_len_index(reg_bank[NUM_STK_COUNTER], ram)] = 
     get_func(func_ls, func_label) -> symbol_num;
-    reg_bank[5] ++;
+    reg_bank[NUM_STK_COUNTER] ++;
 }
 
+// get a global address of a symbol in the current stack frame
+// composed of 3 bits representing the stack frame number,
+// 5 bits representing the symbol.
 char get_pointer(unsigned char * reg_bank, char symbol) {
-    char stk_index = reg_bank[5] - 1;
+    char stk_index = reg_bank[NUM_STK_COUNTER] - 1;
     return (stk_index << 5) + symbol;
 }
 
+// receive a symbol in current stack frame
+// interpret the global address stored in the symbol
+// return the index of the element the symbol points to in ram[256]
 int indirect(unsigned char * reg_bank, char ptr_symbol, unsigned char * ram) {
     char ptr = ram[get_symbol_index(reg_bank, ptr_symbol, ram)];
     char ptr_stk_index = (ptr >> 5) & 0b00000111;
@@ -114,6 +135,7 @@ int indirect(unsigned char * reg_bank, char ptr_symbol, unsigned char * ram) {
     return get_index(ptr_stk_index, ptr_sym_index, ram);
 }
 
+// execute the current operation
 void execute(struct operation this_op, unsigned char * ram, 
              unsigned char * reg_bank, struct func * func_ls) {
     if (this_op.opcode == 0b000) {
@@ -229,6 +251,8 @@ void execute(struct operation this_op, unsigned char * ram,
     }
 }
 
+// check the validity of the parsed binary
+// map symbol A, B, C... to 0, 1, 2... and update them
 void check_update_symbol(struct func * func_ls, unsigned char data_type, 
                         unsigned char * data, char * symbol_ls, int symbol_pt) {
     if (data_type == 0b10 || data_type == 0b11) {
@@ -248,6 +272,7 @@ void check_update_symbol(struct func * func_ls, unsigned char data_type,
     } 
 }
 
+// check the validity of the parsed binary and update symbol
 void check_update(struct func * fpt) {
     struct func * func_ls = fpt;
     while (fpt) {
@@ -331,34 +356,36 @@ int main(int argc, char **argv) {
     parse_binary(fp, &func_ls, size);
     check_update(func_ls);
     unsigned char ram[256] = {};
-    unsigned char reg_bank[8] = {}; //reg_bank[5] stores the total size of stack frames
+    unsigned char reg_bank[8] = {};
     check_entry(func_ls);
     push_stack(ram, reg_bank, 0, func_ls);
-    reg_bank[5] = 1;
+    //reg_bank[5] stores the total size of stack frames
+    reg_bank[NUM_STK_COUNTER] = 1;
     while (1) {
-        int stk_index = reg_bank[5] - 1;
-        int pc = reg_bank[7];
+        int stk_index = reg_bank[NUM_STK_COUNTER] - 1;
+        int pc = reg_bank[PROGRAM_COUNTER];
         struct operation this_op 
         = get_func(func_ls, ram[get_stk_func_index(stk_index, ram)]) -> op_ls[pc];
-        reg_bank[7] ++;
+        reg_bank[PROGRAM_COUNTER] ++;
 
         if (this_op.opcode == 0b001) {   
-            ram[get_stk_pt_index(stk_index, ram)] = reg_bank[7]; //have added this      
+            ram[get_stk_pt_index(stk_index, ram)] = reg_bank[PROGRAM_COUNTER];      
             push_stack(ram, reg_bank, this_op.opr1, func_ls);
-            reg_bank[7] = 0;
+            reg_bank[PROGRAM_COUNTER] = 0;
             continue;
         }
         if (this_op.opcode == 0b010) {
-            reg_bank[5] --;
-            if (reg_bank[5] == 0) {
+            reg_bank[NUM_STK_COUNTER] --;
+            if (reg_bank[NUM_STK_COUNTER] == 0) {
                 break;
             }
-            reg_bank[7] = ram[get_stk_pt_index(reg_bank[5] - 1, ram)];
+            reg_bank[PROGRAM_COUNTER] = 
+            ram[get_stk_pt_index(reg_bank[NUM_STK_COUNTER] - 1, ram)];
             continue;
         }
 
         execute(this_op, ram, reg_bank, func_ls);
-        if (reg_bank[7] >= 
+        if (reg_bank[PROGRAM_COUNTER] >= 
             get_func(func_ls, ram[get_stk_func_index(stk_index, ram)]) -> len) {
             fprintf(stderr, "Out of frame error\n");
             free_all(func_ls);

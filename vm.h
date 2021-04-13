@@ -1,6 +1,11 @@
 #include <stdio.h>
 #ifndef VM_H
 #define VM_H
+
+// structure of a single line operation
+// opcode: type of operation
+// type1, opr1: first type and first value
+// type2, opr2: second type and second value
 struct operation {
         unsigned char opcode;
         unsigned char type1;
@@ -9,6 +14,12 @@ struct operation {
         unsigned char opr2;
 };
 
+// stucture of a function
+// label: 3 bits function label
+// len: size of operations in the function
+// symbol_num: number of symbols appear in the function
+// op_ls: pointer to a list of operations
+// func: pointer to next parsed function
 struct func {
     unsigned char label;
     unsigned char len;
