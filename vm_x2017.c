@@ -340,9 +340,8 @@ int main(int argc, char **argv) {
         int pc = reg_bank[7];
         struct operation this_op 
         = get_func(func_ls, ram[get_stk_func_index(stk_index, ram)]) -> op_ls[pc];
-        ram[get_stk_pt_index(stk_index, ram)] ++;
         reg_bank[7] ++;
-        
+
         if (this_op.opcode == 0b001) {   
             ram[get_stk_pt_index(stk_index, ram)] = reg_bank[7]; //have added this      
             push_stack(ram, reg_bank, this_op.opr1, func_ls);
@@ -359,7 +358,7 @@ int main(int argc, char **argv) {
         }
 
         execute(this_op, ram, reg_bank, func_ls);
-        if (reg_bank[7] > 
+        if (reg_bank[7] >= 
             get_func(func_ls, ram[get_stk_func_index(stk_index, ram)]) -> len) {
             fprintf(stderr, "Out of frame error\n");
             free_all(func_ls);
