@@ -6,7 +6,7 @@ char get_symbol(int index) {
     if (index <= 25) {
         return 'A' + index;
     } else {
-        return 'a' + index;
+        return 'a' + index - 26;
     }
 }
 

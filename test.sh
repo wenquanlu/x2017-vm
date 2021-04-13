@@ -9,7 +9,7 @@ then
             then
                 expectedfile=tests/$filename.out
                 result=$(./vm_x2017 $testcase 2>&1| diff - $expectedfile)
-                #echo $result
+                echo $result
                 if [ "$result" == "" ]
                 then
                 echo "vm $filename passed"
@@ -26,7 +26,7 @@ then
         then
             mil_expected=tests/${filename}_mil.out
             result_mil=$(./objdump_x2017 $testcase | diff - $mil_expected)
-            #echo $result_mil
+            echo $result_mil
             if [ "$result_mil" == "" ]
             then
             echo "milstone $filename passed"

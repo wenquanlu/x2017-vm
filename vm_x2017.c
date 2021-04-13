@@ -82,7 +82,7 @@ struct func * get_func(struct func * func_ls, char func_label) {
         }
         pt = pt -> next;
     }
-    fprintf(stderr, "function being called not defined\n");
+    fprintf(stderr, "Function being called not defined\n");
     free_all(func_ls);
     exit(1);
 }
@@ -91,7 +91,7 @@ void push_stack(unsigned char * ram, unsigned char * reg_bank,
                 unsigned char func_label, struct func * func_ls) {
     if (get_index(reg_bank[5],
         (get_func(func_ls, func_label)) -> symbol_num - 1, ram) > 255) {
-        fprintf(stderr, "stack over flow\n");
+        fprintf(stderr, "Stack over flow\n");
         free_all(func_ls);
         exit(1);
     }
@@ -156,7 +156,7 @@ void execute(struct operation this_op, unsigned char * ram,
             int reg_src = this_op.opr2;
             reg_bank[reg_dest] = reg_bank[reg_src];
         } else {
-            fprintf(stderr, "invalid assembly format\n");
+            fprintf(stderr, "Invalid assembly format\n");
             free_all(func_ls);
             exit(1);
         }
@@ -182,7 +182,7 @@ void execute(struct operation this_op, unsigned char * ram,
             ram[indirect(reg_bank,this_op.opr1, ram)] = 
             ram[get_symbol_index(reg_bank, this_op.opr2, ram)];
         } else {
-            fprintf(stderr, "invalid assembly format\n");
+            fprintf(stderr, "Invalid assembly format\n");
             free_all(func_ls);
             exit(1);
         }
@@ -192,7 +192,7 @@ void execute(struct operation this_op, unsigned char * ram,
             int reg2 = this_op.opr2;
             reg_bank[reg1] = reg_bank[reg1] + reg_bank[reg2];
         } else {
-            fprintf(stderr, "invalid assembly format\n");
+            fprintf(stderr, "Invalid assembly format\n");
             free_all(func_ls);
             exit(1);
         }
@@ -212,7 +212,7 @@ void execute(struct operation this_op, unsigned char * ram,
             unsigned int content = ram[indirect(reg_bank, this_op.opr1, ram)];
             printf("%u\n", content);
         } else {
-            fprintf(stderr, "invalid assembly format\n");
+            fprintf(stderr, "Invalid assembly format\n");
             free_all(func_ls);
             exit(1);
         }
@@ -241,7 +241,7 @@ void check_update_symbol(struct func * func_ls, unsigned char data_type,
             }
         }
         if (!exist) {
-            fprintf(stderr, "symbol refered before init\n");
+            fprintf(stderr, "Symbol refered before init\n");
             free_all(func_ls);
             exit(1);
         }
@@ -293,6 +293,20 @@ void check_update(struct func * fpt) {
                 check_update_symbol(func_ls, op->type1, 
                                    &(op->opr1),symbol_ls, symbol_pt);
             }
+            if (op -> type1 == 0b01) {
+                if (op -> opr1 < 7 && op -> opr1 > 3) {
+                    fprintf(stderr, "Access REG denialed\n");
+                    free_all(func_ls);
+                    exit(1);
+                }
+            }
+            if (op -> type2 == 0b01) {
+                if (op -> opr2 < 7 && op -> opr2 > 3) {
+                    fprintf(stderr, "Access REG denialed\n");
+                    free_all(func_ls);
+                    exit(1);
+                }
+            }
         }
         fpt -> symbol_num = symbol_pt;
         fpt = fpt -> next;
@@ -306,7 +320,7 @@ int main(int argc, char **argv) {
     }
     FILE *fp = fopen(argv[1], "rb");
     if (fp == NULL) {
-        fprintf(stderr, "open file error\n");
+        fprintf(stderr, "Open file error\n");
         exit(1);
     }
     int size = 0;
@@ -320,6 +334,7 @@ int main(int argc, char **argv) {
     unsigned char reg_bank[8] = {}; //reg_bank[5] stores the total size of stack frames
     check_entry(func_ls);
     push_stack(ram, reg_bank, 0, func_ls);
+    reg_bank[5] = 1;
     while (1) {
         int stk_index = reg_bank[5] - 1;
         int pc = reg_bank[7];
@@ -327,12 +342,13 @@ int main(int argc, char **argv) {
         = get_func(func_ls, ram[get_stk_func_index(stk_index, ram)]) -> op_ls[pc];
         ram[get_stk_pt_index(stk_index, ram)] ++;
         reg_bank[7] ++;
-        if (this_op.opcode == 0b001) {          
+        
+        if (this_op.opcode == 0b001) {   
+            ram[get_stk_pt_index(stk_index, ram)] = reg_bank[7]; //have added this      
             push_stack(ram, reg_bank, this_op.opr1, func_ls);
             reg_bank[7] = 0;
             continue;
         }
-
         if (this_op.opcode == 0b010) {
             reg_bank[5] --;
             if (reg_bank[5] == 0) {
@@ -341,7 +357,14 @@ int main(int argc, char **argv) {
             reg_bank[7] = ram[get_stk_pt_index(reg_bank[5] - 1, ram)];
             continue;
         }
+
         execute(this_op, ram, reg_bank, func_ls);
+        if (reg_bank[7] > 
+            get_func(func_ls, ram[get_stk_func_index(stk_index, ram)]) -> len) {
+            fprintf(stderr, "Out of frame error\n");
+            free_all(func_ls);
+            exit(1);
+        }
     }
     free_all(func_ls);
 }

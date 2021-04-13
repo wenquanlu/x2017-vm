@@ -29,7 +29,7 @@ void universal_write_func(FILE * fw, unsigned char x, int bit_num, int * bit_ptr
     *bit_ptr += bit_num;
 }
 
-char to_binary(char * num) {
+unsigned char to_binary(char * num) {
     unsigned int inte = atoi(num);
     if (inte == 0 && *num != '0') {
         if (*num >= 65 && *num <= 90) {
@@ -38,7 +38,7 @@ char to_binary(char * num) {
             return *num - 71;
         }
     }
-    return (char) inte;
+    return (unsigned char) inte;
 }
 
 char bi_from_code(char * tok) {
@@ -193,7 +193,7 @@ int main(int argc, char ** argv) {
             kot2 = strtok(NULL, " ");
             kot3 = strtok(NULL, " ");
             if (!strcmp(kot1, cal) || !strcmp(kot1, ret) || !strcmp(kot1, print) || !strcmp(kot1, not)|| !strcmp(kot1, equ)) {
-                char content = to_binary(kot3);
+                unsigned char content = to_binary(kot3);
                 universal_write_func(fw, content, get_type_len(kot2), &bit_ptr, &atm);
                 universal_write_func(fw, bi_from_type(kot2), 2, &bit_ptr, &atm);
                 universal_write_func(fw, bi_from_code(kot1), 3, &bit_ptr, &atm);
@@ -202,8 +202,8 @@ int main(int argc, char ** argv) {
             }
             kot4 = strtok(NULL, " ");
             kot5 = strtok(NULL, " ");
-            char content2 = to_binary(kot3);
-            char content1 = to_binary(kot5);
+            unsigned char content2 = to_binary(kot3);
+            unsigned char content1 = to_binary(kot5);
             universal_write_func(fw, content1, get_type_len(kot4), &bit_ptr, &atm);
             universal_write_func(fw, bi_from_type(kot4), 2, &bit_ptr,&atm);
             universal_write_func(fw, content2, get_type_len(kot2), &bit_ptr, &atm);
