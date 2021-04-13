@@ -1,4 +1,5 @@
 #!/bin/bash
+export ASAN_OPTIONS=verify_asan_link_order=0
 pass_vm=0
 fail_vm=0
 pass_mil=0
