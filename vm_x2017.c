@@ -354,6 +354,7 @@ int main(int argc, char **argv) {
     fseek(fp, -1, SEEK_END);
     struct func * func_ls = NULL;
     parse_binary(fp, &func_ls, size);
+    fclose(fp);
     check_update(func_ls);
     unsigned char ram[256] = {};
     unsigned char reg_bank[8] = {};

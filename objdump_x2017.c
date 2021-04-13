@@ -121,6 +121,7 @@ int main(int argc, char **argv) {
     fseek(fp, -1, SEEK_END);
     struct func * func_ls = NULL;
     parse_binary(fp, &func_ls, size);
+    fclose(fp);
     struct func * fpt = func_ls;
     print_code(fpt);
     struct func * fpt2 = func_ls;

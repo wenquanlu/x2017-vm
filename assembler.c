@@ -1,7 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
+
+// Function that writes bits to end of a file
+// fw: pointer to file to be written to
+// x: content for writing
+// bit_num: number of bits to be written
+// bit_ptr: tracking how many bits have been written
+// atm: the last byte from the last write operation (can be incomplete)
 void universal_write_func(FILE * fw, unsigned char x, int bit_num, int * bit_ptr, char * atm) {
     int multiple = *bit_ptr / 8;
     int remainder = *bit_ptr % 8;
@@ -29,6 +35,7 @@ void universal_write_func(FILE * fw, unsigned char x, int bit_num, int * bit_ptr
     *bit_ptr += bit_num;
 }
 
+// Convert values to binary
 unsigned char to_binary(char * num) {
     unsigned int inte = atoi(num);
     if (inte == 0 && *num != '0') {
@@ -41,6 +48,7 @@ unsigned char to_binary(char * num) {
     return (unsigned char) inte;
 }
 
+// convert the string representation of operation type to binary
 char bi_from_code(char * tok) {
     if (!strcmp(tok, "MOV")) {
         return 0b000;
@@ -64,6 +72,7 @@ char bi_from_code(char * tok) {
     }
 }
 
+// get length (number of bits) of a certain type value
 int get_type_len(char * tok) {
     if (!strcmp(tok, "VAL")) {
         return 8;
@@ -78,6 +87,8 @@ int get_type_len(char * tok) {
         exit(1);
     }
 }
+
+// convert the string representation of value type to binary
 char bi_from_type(char * tok) {
     if (!strcmp(tok, "VAL")) {
         return 0b00;
@@ -92,6 +103,7 @@ char bi_from_type(char * tok) {
         exit(1);
     }
 }
+
 int main(int argc, char ** argv) {
     FILE * f = fopen(argv[1], "r");
     if (f == NULL) {
